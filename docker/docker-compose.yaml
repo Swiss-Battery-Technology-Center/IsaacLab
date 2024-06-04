@@ -188,15 +188,15 @@ services:
         target: ${DOCKER_USER_HOME}/.vscode-server
       - type: bind
         source: ../../sbtc-robots/src/kinova/kinova.py
-        target: ${DOCKER_ISAACSIM_ROOT_PATH}/source/extensions/omni.isaac.lab_assets/omni/isaac/lab_assets/kinova.py
+        target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_assets/omni/isaac/lab_assets/kinova.py
         read_only: false
       - type: bind
         source: ../../sbtc-gym/src/sbtc/
-        target: ${DOCKER_ISAACSIM_ROOT_PATH}/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/sbtc/
+        target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/sbtc/
         read_only: false
       - type: bind
         source: ../../sbtc-rl/
-        target: ${DOCKER_ISAACSIM_ROOT_PATH}/source/standalone/sbtc-rl/
+        target: ${DOCKER_ISAACLAB_PATH}/source/standalone/sbtc-rl/
         read_only: false
     network_mode: host
     deploy: *default-isaac-lab-deploy
