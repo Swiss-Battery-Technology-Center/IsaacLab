@@ -1,12 +1,17 @@
-# Dockerfile to install Orbit + Isaac Sim, with conda as the default env.
-#
-# Written by Özhan Özen, SBTC, Switzerland Innovation Park Biel/Bienne.
+#################################################################
+# Copyright (c) 2024 SBTC Switzerland Innovation Park Biel Bienne
+# Author: Özhan Özen
+# Email: oezhan.oezen@sipbb.ch, sbtc@sipbb.ch
+# Created: 2024-06-04
+#################################################################
 
+# Dockerfile to install IsaacLab + Isaac Sim, with conda as the default env.
 
-# Extend from the base Orbit image
-FROM orbit-base AS orbit-sbtc
+# Extend from the base IsaacLab image
+FROM isaac-lab-base AS isaac-lab-sbtc
 
-ARG DOCKER_ORBIT_PATH
+ARG ISAACLAB_PATH_ARG
+ENV ISAACLAB_PATH=${ISAACLAB_PATH_ARG}
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install wget
 
@@ -20,27 +25,27 @@ RUN DEBIAN_FRONTEND=noninteractive \
 ENV PATH="/opt/miniconda/bin:$PATH"
 RUN conda update -n base -c defaults conda
 
-# Activate Orbit conda environment and run setup scripts
+# Activate IsaacLab conda environment and run setup scripts
 RUN --mount=type=cache,target=/opt/miniconda/pkgs \
-    DEBIAN_FRONTEND=noninteractive ${DOCKER_ORBIT_PATH}/orbit.sh --conda
+    DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh --conda
 
-RUN echo "conda deactivate && conda activate orbit" >> ${HOME}/.bashrc
+RUN echo "conda deactivate && conda activate isaaclab" >> ${HOME}/.bashrc
 
-SHELL ["/opt/miniconda/bin/conda", "run", "-n", "orbit", "/bin/bash", "-c"]
+SHELL ["/opt/miniconda/bin/conda", "run", "-n", "isaaclab", "/bin/bash", "-c"]
 
 RUN DEBIAN_FRONTEND=noninteractive \
-    ${DOCKER_ORBIT_PATH}/orbit.sh --install && \
-    ${DOCKER_ORBIT_PATH}/orbit.sh --extra
+    ${ISAACLAB_PATH}/isaaclab.sh --install && \
+    ${ISAACLAB_PATH}/isaaclab.sh --extra
 
-WORKDIR ${DOCKER_ORBIT_PATH}/
+WORKDIR ${ISAACLAB_PATH}/
 
 # Copy additional scripts
 COPY docker/sbtc/bash_scripts/runisaac.sh ./
 
 # Setup environment and symbolic links
-RUN ln -s "/docs" ${DOCKER_ORBIT_PATH}/_docs && \
+RUN ln -s "/docs" ${ISAACLAB_PATH}/_docs && \
     echo "export LIVESTREAM=3" >> ${HOME}/.bashrc
 
 # Install packages that do not install correctly during setup
-RUN DEBIAN_FRONTEND=noninteractive ${DOCKER_ORBIT_PATH}/_isaac_sim/python.sh -m pip install psutil && \
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/_isaac_sim/python.sh -m pip install psutil && \
     pip install torch-tb-profiler
