@@ -192,7 +192,7 @@ services:
         read_only: false
       - type: bind
         source: ../../sbtc-gym/src/sbtc/
-        target: ${DOCKER_ISAACSIM_ROOT_PATH}/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/sbtc/
+        target: ${DOCKER_ISAACSIM_ROOT_PATH}/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/manager_based/sbtc/
         read_only: false
       - type: bind
         source: ../../sbtc-rl/
