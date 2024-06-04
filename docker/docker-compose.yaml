@@ -206,6 +206,27 @@ services:
     stdin_open: true
     tty: true
 
+  orbit-sbtc-ros2:
+    profiles: [ "sbtc-ros2" ]
+    env_file:
+      - .env.base
+      - .env.sbtc-ros2
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.sbtc-ros2
+      args:
+        - ROS2_APT_PACKAGE=${ROS2_APT_PACKAGE:-NONE}
+        - DOCKER_USER_HOME=${DOCKER_USER_HOME}
+    image: ${IMAGE_NAME}
+    container_name: orbit-sbtc-ros2
+    environment: *default-orbit-environment
+    volumes: *default-orbit-volumes
+    network_mode: host
+    deploy: *default-orbit-deploy
+    entrypoint: bash
+    stdin_open: true
+    tty: true
+
 volumes:
   # isaac-sim
   isaac-cache-kit:
