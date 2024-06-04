@@ -34,8 +34,7 @@ RUN echo "conda deactivate && conda activate isaaclab" >> ${HOME}/.bashrc
 SHELL ["/opt/miniconda/bin/conda", "run", "-n", "isaaclab", "/bin/bash", "-c"]
 
 RUN DEBIAN_FRONTEND=noninteractive \
-    ${ISAACLAB_PATH}/isaaclab.sh --install && \
-    ${ISAACLAB_PATH}/isaaclab.sh --extra
+    ${ISAACLAB_PATH}/isaaclab.sh --install
 
 WORKDIR ${ISAACLAB_PATH}/
 
@@ -44,7 +43,7 @@ COPY docker/sbtc/bash_scripts/runisaac.sh ./
 
 # Setup environment and symbolic links
 RUN ln -s "/docs" ${ISAACLAB_PATH}/_docs && \
-    echo "export LIVESTREAM=3" >> ${HOME}/.bashrc
+    echo "export LIVESTREAM=2" >> ${HOME}/.bashrc
 
 # Install packages that do not install correctly during setup
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/_isaac_sim/python.sh -m pip install psutil && \
