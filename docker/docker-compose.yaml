@@ -129,7 +129,7 @@ services:
       dockerfile: docker/Dockerfile.sbtc
       args:
         - ISAACLAB_PATH_ARG=${DOCKER_ISAACLAB_PATH}
-    image: ${IMAGE_NAME} 
+    image: ${IMAGE_NAME}
     container_name: isaac-lab-sbtc #container_name: ${CONTAINER_NAME}
     environment: *default-isaac-lab-environment
     volumes:
