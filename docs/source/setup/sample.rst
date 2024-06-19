@@ -122,7 +122,7 @@ Imitation Learning
 
 Using the teleoperation devices, it is also possible to collect data for
 learning from demonstrations (LfD). For this, we support the learning
-framework `Robomimic <https://robomimic.github.io/>`__ and allow saving
+framework `Robomimic <https://robomimic.github.io/>`__ (Linux only) and allow saving
 data in
 `HDF5 <https://robomimic.github.io/docs/tutorials/dataset_contents.html#viewing-hdf5-dataset-structure>`__
 format.
@@ -215,7 +215,7 @@ from the environments into the respective libraries function argument and return
       # run script for training
       ./isaaclab.sh -p source/standalone/workflows/rsl_rl/train.py --task Isaac-Reach-Franka-v0 --headless
       # run script for playing with 32 environments
-      ./isaaclab.sh -p source/standalone/workflows/rsl_rl/play.py --task Isaac-Reach-Franka-v0 --num_envs 32 --checkpoint /PATH/TO/model.pth
+      ./isaaclab.sh -p source/standalone/workflows/rsl_rl/play.py --task Isaac-Reach-Franka-v0 --num_envs 32 --load_run run_folder_name --checkpoint model.pt
 
 All the scripts above log the training progress to `Tensorboard`_ in the ``logs`` directory in the root of
 the repository. The logs directory follows the pattern ``logs/<library>/<task>/<date-time>``, where ``<library>``
