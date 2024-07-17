@@ -129,6 +129,10 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
     target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_assets/omni/isaac/lab_assets/kinova.py
     read_only: false
   - type: bind
+    source: ../../sbtc-robots/src/franka/franka.py
+    target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_assets/omni/isaac/lab_assets/franka.py
+    read_only: false
+  - type: bind
     source: ../../sbtc-gym/src/sbtc/
     target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/sbtc/
     read_only: false
