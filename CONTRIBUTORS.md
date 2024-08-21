@@ -28,6 +28,7 @@ Guidelines for modifications:
 * Mayank Mittal
 * Nikita Rudin
 * Pascal Roth
+* Michael Gussert
 
 ## Contributors
 
@@ -39,6 +40,7 @@ Guidelines for modifications:
 * Brayden Zhang
 * Calvin Yu
 * Chenyu Yang
+* HoJin Jeon
 * Jia Lin Yuan
 * Jingzhou Liu
 * Johnson Sun
