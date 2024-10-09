@@ -140,6 +140,9 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
     source: ../../sbtc-rl/
     target: ${DOCKER_ISAACLAB_PATH}/source/standalone/sbtc-rl/
     read_only: false
+  - type: bind
+    source: ../.vscode
+    target: ${DOCKER_ISAACLAB_PATH}/.vscode
 
 services:
   # This service is the base Isaac Lab image
