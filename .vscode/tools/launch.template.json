@@ -15,7 +15,7 @@
             "name": "Python: Train sbtc-reach",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
+            "args" : ["--task", "SBTC-Reach-Franka-osc-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
@@ -23,7 +23,7 @@
             "name": "Python: Play sbtc-reach",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args" : ["--task", "SBTC-Reach-Franka-osc-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
@@ -31,7 +31,7 @@
             "name": "Python: Record sbtc-reach",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
+            "args" : ["--task", "SBTC-Reach-Franka-osc-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
             "--video", "--video_length", "500"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
@@ -40,7 +40,7 @@
             "name": "Python: RandomAgent sbtc-reach",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args" : ["--task", "SBTC-Reach-Franka-osc-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/environments/random_agent.py",
             "console": "integratedTerminal"
         },
