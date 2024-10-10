@@ -12,68 +12,68 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Train sbtc-reach-osc",
+            "name": "Python: Train sbtc-reach-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-osc-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
+            "args" : ["--task", "SBTC-Reach-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Play sbtc-reach-osc",
+            "name": "Python: Play sbtc-reach-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-osc-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args" : ["--task", "SBTC-Reach-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Record sbtc-reach-osc",
+            "name": "Python: Record sbtc-reach-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-osc-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
+            "args" : ["--task", "SBTC-Reach-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
             "--video", "--video_length", "500"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: RandomAgent sbtc-reach-osc",
+            "name": "Python: RandomAgent sbtc-reach-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-osc-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args" : ["--task", "SBTC-Reach-Franka-OSC-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/environments/random_agent.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Train sbtc-reach-ia",
+            "name": "Python: Train sbtc-reach-IA",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-ia-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
+            "args" : ["--task", "SBTC-Reach-Franka-IA-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Play sbtc-reach-ia",
+            "name": "Python: Play sbtc-reach-IA",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-ia-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args" : ["--task", "SBTC-Reach-Franka-IA-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Record sbtc-reach-ia",
+            "name": "Python: Record sbtc-reach-IA",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-ia-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
+            "args" : ["--task", "SBTC-Reach-Franka-IA-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
             "--video", "--video_length", "500"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: RandomAgent sbtc-reach-ia",
+            "name": "Python: RandomAgent sbtc-reach-IA",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-ia-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args" : ["--task", "SBTC-Reach-Franka-IA-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/environments/random_agent.py",
             "console": "integratedTerminal"
         },
