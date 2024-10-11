@@ -73,11 +73,15 @@ class OperationalSpaceController:
         self._selection_matrix_force_b = torch.zeros_like(self._selection_matrix_force_task)
         # -- commands
         self._task_space_target_task = torch.zeros(self.num_envs, self.target_dim, device=self._device)
-        # -- buffers for motion/force control
+        # -- Placeholders for motion/force control
         self.desired_ee_pose_task = None
         self.desired_ee_pose_b = None
         self.desired_ee_wrench_task = None
         self.desired_ee_wrench_b = None
+        # -- buffer for operational space mass matrix
+        self._os_mass_matrix_b = torch.zeros(self.num_envs, 6, 6, device=self._device)
+        # -- Placeholder for the inverse of joint space mass matrix
+        self._mass_matrix_inv = None
         # -- motion control gains
         self._motion_p_gains_task = torch.diag_embed(
             torch.ones(self.num_envs, 6, device=self._device)
@@ -121,6 +125,14 @@ class OperationalSpaceController:
         )
         # -- end-effector contact wrench
         self._ee_contact_wrench_b = torch.zeros(self.num_envs, 6, device=self._device)
+
+        # -- buffers for null-space control gains
+        self._null_space_p_gain = torch.tensor(self.cfg.null_space_stiffness, dtype=torch.float, device=self._device)
+        self._null_space_d_gain = (
+            2
+            * torch.sqrt(self._null_space_p_gain)
+            * torch.tensor(self.cfg.null_space_damping_ratio, dtype=torch.float, device=self._device)
+        )
 
     """
     Properties.
@@ -335,6 +347,8 @@ class OperationalSpaceController:
         current_ee_force_b: torch.Tensor | None = None,
         mass_matrix: torch.Tensor | None = None,
         gravity: torch.Tensor | None = None,
+        current_joint_pos: torch.Tensor | None = None,
+        current_joint_vel: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Performs inference with the controller.
 
@@ -350,6 +364,10 @@ class OperationalSpaceController:
             mass_matrix: The joint-space mass/inertia matrix. It is a tensor of shape (num_envs, num_DoF, num_DoF).
                 Defaults to None.
             gravity: The joint-space gravity vector. It is a tensor of shape (num_envs, num_DoF). Defaults to None.
+            current_joint_pos: The current joint positions. It is a tensor of shape (num_envs, num_DoF).
+                Defaults to None.
+            current_joint_vel: The current joint velocities. It is a tensor of shape (num_envs, num_DoF).
+                Defaults to None.
 
         Raises:
             ValueError: When the current end-effector pose is not provided for the 'pose_rel' command.
@@ -393,25 +411,23 @@ class OperationalSpaceController:
             if self.cfg.inertial_dynamics_decoupling:
                 # check input is provided
                 if mass_matrix is None:
-                    raise ValueError("Mass matrix is required for inertial compensation.")
+                    raise ValueError("Mass matrix is required for inertial decoupling.")
                 # Compute operational space mass matrix
-                mass_matrix_inv = torch.inverse(mass_matrix)
+                self._mass_matrix_inv = torch.inverse(mass_matrix)
                 if self.cfg.partial_inertial_dynamics_decoupling:
-                    # Create a zero tensor representing the mass matrix, to fill in the non-zero elements later
-                    os_mass_matrix = torch.zeros(self.num_envs, 6, 6, device=self._device)
                     # Fill in the translational and rotational parts of the inertia separately, ignoring their coupling
-                    os_mass_matrix[:, 0:3, 0:3] = torch.inverse(
-                        jacobian_b[:, 0:3] @ mass_matrix_inv @ jacobian_b[:, 0:3].mT
+                    self._os_mass_matrix_b[:, 0:3, 0:3] = torch.inverse(
+                        jacobian_b[:, 0:3] @ self._mass_matrix_inv @ jacobian_b[:, 0:3].mT
                     )
-                    os_mass_matrix[:, 3:6, 3:6] = torch.inverse(
-                        jacobian_b[:, 3:6] @ mass_matrix_inv @ jacobian_b[:, 3:6].mT
+                    self._os_mass_matrix_b[:, 3:6, 3:6] = torch.inverse(
+                        jacobian_b[:, 3:6] @ self._mass_matrix_inv @ jacobian_b[:, 3:6].mT
                     )
                 else:
                     # Calculate the operational space mass matrix fully accounting for the couplings
-                    os_mass_matrix = torch.inverse(jacobian_b @ mass_matrix_inv @ jacobian_b.mT)
+                    self._os_mass_matrix_b[:] = torch.inverse(jacobian_b @ self._mass_matrix_inv @ jacobian_b.mT)
                 # (Generalized) operational space command forces
                 # F = (J M^(-1) J^T)^(-1) * \ddot(x_des) = M_task * \ddot(x_des)
-                os_command_forces_b = os_mass_matrix @ des_ee_acc_b
+                os_command_forces_b = self._os_mass_matrix_b @ des_ee_acc_b
             else:
                 # Task-space impedance control: command forces = \ddot(x_des).
                 # Please note that the definition of task-space impedance control varies in literature.
@@ -451,5 +467,58 @@ class OperationalSpaceController:
                 raise ValueError("Gravity vector is required for gravity compensation.")
             # add gravity compensation
             joint_efforts += gravity
+
+        # Add null-space control
+        # -- Free null-space control
+        if self.cfg.null_space_control == "free":
+            # No additional control is applied in the null space.
+            pass
+        else:
+            # Check if the system is redundant
+            if num_DoF <= 6:
+                raise ValueError("Null-space control is only applicable for redundant manipulators.")
+
+            # Calculate the pseudo-inverse of the Jacobian
+            if self.cfg.inertial_dynamics_decoupling:
+                # Dynamically Consistent Pseudo-Inverse
+                if self._mass_matrix_inv is None or mass_matrix is None:  # FIXME Check if partial works!
+                    raise ValueError("Mass matrix inverse is required for dynamically Consistent Pseudo-Inverse")
+                jacobian_pinv_transpose = self._os_mass_matrix_b @ jacobian_b @ self._mass_matrix_inv
+            else:
+                # Moore-Penrose Pseudo-Inverse
+                jacobian_pinv_transpose = torch.pinverse(jacobian_b).mT
+
+            # Calculate the null-space projector
+            nullspace_jacobian_transpose = (
+                torch.eye(n=num_DoF, device=self._device) - jacobian_b.mT @ jacobian_pinv_transpose
+            )
+
+            # Centering null space control
+            if self.cfg.null_space_control == "centering":
+
+                # Check if the current joint positions and velocities are provided
+                if current_joint_pos is None or current_joint_vel is None:
+                    raise ValueError("Current joint positions and velocities are required for null-space control.")
+
+                # Calculate the joint errors for centering
+                joint_pos_error = -current_joint_pos
+                joint_vel_error = -current_joint_vel
+
+                # Calculate the desired joint accelerations for centering
+                joint_centering_acc = (
+                    self._null_space_p_gain * joint_pos_error + self._null_space_d_gain * joint_vel_error
+                ).unsqueeze(-1)
+
+                # Calculate the projected torques in null-space
+                if mass_matrix is not None:
+                    tau_null = (nullspace_jacobian_transpose @ mass_matrix @ joint_centering_acc).squeeze(-1)
+                else:
+                    tau_null = nullspace_jacobian_transpose @ joint_centering_acc
+
+                # Add the null-space joint efforts to the total joint efforts
+                joint_efforts += tau_null
+
+            else:
+                raise ValueError(f"Invalid null-space control method: {self.cfg.null_space_control}.")
 
         return joint_efforts

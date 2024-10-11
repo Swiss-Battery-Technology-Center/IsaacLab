@@ -231,6 +231,23 @@ class TestOperationalSpaceController(unittest.TestCase):
 
         self._run_op_space_controller(robot, osc, "panda_hand", ["panda_joint.*"], self.target_abs_pose_set_b)
 
+    def test_franka_pose_abs_without_inertial_decoupling_nullspace_centering(self):
+        """Test absolute pose control with fixed impedance and without inertial dynamics decoupling
+        but with nullspace centering."""
+        robot = Articulation(cfg=self.robot_cfg)
+        osc_cfg = OperationalSpaceControllerCfg(
+            target_types=["pose_abs"],
+            impedance_mode="fixed",
+            inertial_dynamics_decoupling=False,
+            gravity_compensation=False,
+            motion_stiffness_task=[400.0, 400.0, 400.0, 100.0, 100.0, 100.0],
+            motion_damping_ratio_task=[5.0, 5.0, 5.0, 0.001, 0.001, 0.001],
+            null_space_control="centering",
+        )
+        osc = OperationalSpaceController(osc_cfg, num_envs=self.num_envs, device=self.sim.device)
+
+        self._run_op_space_controller(robot, osc, "panda_hand", ["panda_joint.*"], self.target_abs_pose_set_b)
+
     def test_franka_pose_abs_with_partial_inertial_decoupling(self):
         """Test absolute pose control with fixed impedance and partial inertial dynamics decoupling.."""
         robot = Articulation(cfg=self.robot_cfg)
@@ -275,6 +292,23 @@ class TestOperationalSpaceController(unittest.TestCase):
             gravity_compensation=False,
             motion_stiffness_task=500.0,
             motion_damping_ratio_task=1.0,
+        )
+        osc = OperationalSpaceController(osc_cfg, num_envs=self.num_envs, device=self.sim.device)
+
+        self._run_op_space_controller(robot, osc, "panda_hand", ["panda_joint.*"], self.target_abs_pose_set_b)
+
+    def test_franka_pose_abs_nullspace_centering(self):
+        """Test absolute pose control with fixed impedance, inertial decoupling and nullspace centering."""
+        robot = Articulation(cfg=self.robot_cfg)
+        osc_cfg = OperationalSpaceControllerCfg(
+            target_types=["pose_abs"],
+            impedance_mode="fixed",
+            inertial_dynamics_decoupling=True,
+            partial_inertial_dynamics_decoupling=False,
+            gravity_compensation=False,
+            motion_stiffness_task=500.0,
+            motion_damping_ratio_task=1.0,
+            null_space_control="centering",
         )
         osc = OperationalSpaceController(osc_cfg, num_envs=self.num_envs, device=self.sim.device)
 
@@ -607,9 +641,18 @@ class TestOperationalSpaceController(unittest.TestCase):
         robot.update(dt=sim_dt)
 
         # get the updated states
-        jacobian_b, mass_matrix, gravity, ee_pose_b, ee_vel_b, root_pose_w, ee_pose_w, ee_force_b = self._update_states(
-            robot, ee_frame_idx, arm_joint_ids
-        )
+        (
+            jacobian_b,
+            mass_matrix,
+            gravity,
+            ee_pose_b,
+            ee_vel_b,
+            root_pose_w,
+            ee_pose_w,
+            ee_force_b,
+            joint_pos,
+            joint_vel,
+        ) = self._update_states(robot, ee_frame_idx, arm_joint_ids)
 
         # Track the given target command
         current_goal_idx = 0  # Current goal index for the arm
@@ -644,7 +687,7 @@ class TestOperationalSpaceController(unittest.TestCase):
                     self.contact_forces.reset()
                 # reset target pose
                 robot.update(sim_dt)
-                _, _, _, ee_pose_b, _, _, _, _ = self._update_states(
+                _, _, _, ee_pose_b, _, _, _, _, _, _ = self._update_states(
                     robot, ee_frame_idx, arm_joint_ids
                 )  # at reset, the jacobians are not updated to the latest state
                 command, ee_target_pose_b, ee_target_pose_w, current_goal_idx = self._update_target(
@@ -660,9 +703,18 @@ class TestOperationalSpaceController(unittest.TestCase):
                 )
             else:
                 # get the updated states
-                jacobian_b, mass_matrix, gravity, ee_pose_b, ee_vel_b, root_pose_w, ee_pose_w, ee_force_b = (
-                    self._update_states(robot, ee_frame_idx, arm_joint_ids)
-                )
+                (
+                    jacobian_b,
+                    mass_matrix,
+                    gravity,
+                    ee_pose_b,
+                    ee_vel_b,
+                    root_pose_w,
+                    ee_pose_w,
+                    ee_force_b,
+                    joint_pos,
+                    joint_vel,
+                ) = self._update_states(robot, ee_frame_idx, arm_joint_ids)
                 # compute the joint commands
                 joint_efforts = osc.compute(
                     jacobian_b=jacobian_b,
@@ -671,6 +723,8 @@ class TestOperationalSpaceController(unittest.TestCase):
                     current_ee_force_b=ee_force_b,
                     mass_matrix=mass_matrix,
                     gravity=gravity,
+                    current_joint_pos=joint_pos,
+                    current_joint_vel=joint_vel,
                 )
                 robot.set_joint_effort_target(joint_efforts, joint_ids=arm_joint_ids)
                 robot.write_data_to_sim()
@@ -729,7 +783,22 @@ class TestOperationalSpaceController(unittest.TestCase):
         # This is a simplification, only for the sake of testing.
         ee_force_b = ee_force_w
 
-        return jacobian_b, mass_matrix, gravity, ee_pose_b, ee_vel_b, root_pose_w, ee_pose_w, ee_force_b
+        # Get joint positions and velocities
+        joint_pos = robot.data.joint_pos[:, arm_joint_ids]
+        joint_vel = robot.data.joint_vel[:, arm_joint_ids]
+
+        return (
+            jacobian_b,
+            mass_matrix,
+            gravity,
+            ee_pose_b,
+            ee_vel_b,
+            root_pose_w,
+            ee_pose_w,
+            ee_force_b,
+            joint_pos,
+            joint_vel,
+        )
 
     def _update_target(
         self,
