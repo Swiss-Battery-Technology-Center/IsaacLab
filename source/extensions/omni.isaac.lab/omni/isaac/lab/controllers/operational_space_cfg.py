@@ -76,11 +76,15 @@ class OperationalSpaceControllerCfg:
     only the first three elements are used for the feedback loop.
     """
 
-    null_space_control: str = "free"
-    """The null space control method for redundant manipulators: "free", "centering". """
+    nullspace_control: str = "free"
+    """The null space control method for redundant manipulators: "free", "position".
 
-    null_space_stiffness: float = 10.0
+    Note: "position" is used to drive the redundant manipulator to zero configuration by default. If target_joint_pos
+    is provided in the compute() method, it will be driven to this configuration.
+    """
+
+    nullspace_stiffness: float = 10.0
     """The stiffness for null space control."""
 
-    null_space_damping_ratio: float = 1.0
+    nullspace_damping_ratio: float = 1.0
     """The damping ratio for null space control."""

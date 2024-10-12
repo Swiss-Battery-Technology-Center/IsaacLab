@@ -242,7 +242,7 @@ class TestOperationalSpaceController(unittest.TestCase):
             gravity_compensation=False,
             motion_stiffness_task=[400.0, 400.0, 400.0, 100.0, 100.0, 100.0],
             motion_damping_ratio_task=[5.0, 5.0, 5.0, 0.001, 0.001, 0.001],
-            null_space_control="centering",
+            nullspace_control="position",
         )
         osc = OperationalSpaceController(osc_cfg, num_envs=self.num_envs, device=self.sim.device)
 
@@ -308,7 +308,7 @@ class TestOperationalSpaceController(unittest.TestCase):
             gravity_compensation=False,
             motion_stiffness_task=500.0,
             motion_damping_ratio_task=1.0,
-            null_space_control="centering",
+            nullspace_control="position",
         )
         osc = OperationalSpaceController(osc_cfg, num_envs=self.num_envs, device=self.sim.device)
 
@@ -649,6 +649,9 @@ class TestOperationalSpaceController(unittest.TestCase):
         # Note: We need to update buffers before the first step for the controller.
         robot.update(dt=sim_dt)
 
+        # Get the center of the robot soft joint limits
+        joint_centers = torch.mean(robot.data.soft_joint_pos_limits[:, arm_joint_ids, :], dim=-1)
+
         # get the updated states
         (
             jacobian_b,
@@ -734,6 +737,7 @@ class TestOperationalSpaceController(unittest.TestCase):
                     gravity=gravity,
                     current_joint_pos=joint_pos,
                     current_joint_vel=joint_vel,
+                    nullspace_joint_pos_target=joint_centers,
                 )
                 robot.set_joint_effort_target(joint_efforts, joint_ids=arm_joint_ids)
                 robot.write_data_to_sim()

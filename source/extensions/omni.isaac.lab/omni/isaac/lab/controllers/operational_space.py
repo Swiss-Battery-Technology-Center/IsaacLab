@@ -127,11 +127,11 @@ class OperationalSpaceController:
         self._ee_contact_wrench_b = torch.zeros(self.num_envs, 6, device=self._device)
 
         # -- buffers for null-space control gains
-        self._null_space_p_gain = torch.tensor(self.cfg.null_space_stiffness, dtype=torch.float, device=self._device)
-        self._null_space_d_gain = (
+        self._nullspace_p_gain = torch.tensor(self.cfg.nullspace_stiffness, dtype=torch.float, device=self._device)
+        self._nullspace_d_gain = (
             2
-            * torch.sqrt(self._null_space_p_gain)
-            * torch.tensor(self.cfg.null_space_damping_ratio, dtype=torch.float, device=self._device)
+            * torch.sqrt(self._nullspace_p_gain)
+            * torch.tensor(self.cfg.nullspace_damping_ratio, dtype=torch.float, device=self._device)
         )
 
     """
@@ -354,6 +354,7 @@ class OperationalSpaceController:
         gravity: torch.Tensor | None = None,
         current_joint_pos: torch.Tensor | None = None,
         current_joint_vel: torch.Tensor | None = None,
+        nullspace_joint_pos_target: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Performs inference with the controller.
 
@@ -373,6 +374,8 @@ class OperationalSpaceController:
                 Defaults to None.
             current_joint_vel: The current joint velocities. It is a tensor of shape (num_envs, num_DoF).
                 Defaults to None.
+            nullspace_joint_pos_target: The target joint positions the null space controller is trying to enforce, when
+                possible. It is a tensor of shape (num_envs, num_DoF).
 
         Raises:
             ValueError: When motion-control is enabled but the current end-effector pose or velocity is not provided.
@@ -380,6 +383,12 @@ class OperationalSpaceController:
             ValueError: When the current end-effector pose is not provided for the 'pose_rel' command.
             ValueError: When closed-loop force control is enabled but the current end-effector force is not provided.
             ValueError: When gravity compensation is enabled but the gravity vector is not provided.
+            ValueError: When null-space control is enabled but the system is not redundant.
+            ValueError: When dynamically consistent pseudo-inverse is enabled but the mass matrix inverse is not provided.
+            ValueError: When null-space control is enabled but the current joint positions and velocities are not provided.
+            ValueError: When target joint positions are provided for null-space control but their dimensions do not match
+                the current joint positions.
+            ValueError: When an invalid null-space control method is provided.
 
         Returns:
             joint_efforts: The joint efforts computed by the controller. It is a tensor of shape (num_envs, num_DoF).
@@ -474,7 +483,7 @@ class OperationalSpaceController:
 
         # Add null-space control
         # -- Free null-space control
-        if self.cfg.null_space_control == "free":
+        if self.cfg.nullspace_control == "free":
             # No additional control is applied in the null space.
             pass
         else:
@@ -497,32 +506,42 @@ class OperationalSpaceController:
                 torch.eye(n=num_DoF, device=self._device) - jacobian_b.mT @ jacobian_pinv_transpose
             )
 
-            # Centering null space control
-            if self.cfg.null_space_control == "centering":
+            # Null space position control
+            if self.cfg.nullspace_control == "position":
 
                 # Check if the current joint positions and velocities are provided
                 if current_joint_pos is None or current_joint_vel is None:
                     raise ValueError("Current joint positions and velocities are required for null-space control.")
 
-                # Calculate the joint errors for centering
-                joint_pos_error = -current_joint_pos
-                joint_vel_error = -current_joint_vel
+                # Calculate the joint errors for nullspace position control
+                if nullspace_joint_pos_target is None:
+                    nullspace_joint_pos_target = torch.zeros_like(current_joint_pos)
+                # Check if the dimensions of the target nullspace joint positions match the current joint positions
+                elif nullspace_joint_pos_target.shape != current_joint_pos.shape:
+                    raise ValueError(
+                        f"The target nullspace joint positions shape '{nullspace_joint_pos_target.shape}' does not"
+                        f"match the current joint positions shape '{current_joint_pos.shape}'."
+                    )
 
-                # Calculate the desired joint accelerations for centering
-                joint_centering_acc = (
-                    self._null_space_p_gain * joint_pos_error + self._null_space_d_gain * joint_vel_error
+                joint_pos_error_nullspace = nullspace_joint_pos_target - current_joint_pos
+                joint_vel_error_nullspace = -current_joint_vel
+
+                # Calculate the desired joint accelerations
+                joint_acc_nullspace = (
+                    self._nullspace_p_gain * joint_pos_error_nullspace
+                    + self._nullspace_d_gain * joint_vel_error_nullspace
                 ).unsqueeze(-1)
 
                 # Calculate the projected torques in null-space
                 if mass_matrix is not None:
-                    tau_null = (nullspace_jacobian_transpose @ mass_matrix @ joint_centering_acc).squeeze(-1)
+                    tau_null = (nullspace_jacobian_transpose @ mass_matrix @ joint_acc_nullspace).squeeze(-1)
                 else:
-                    tau_null = nullspace_jacobian_transpose @ joint_centering_acc
+                    tau_null = nullspace_jacobian_transpose @ joint_acc_nullspace
 
                 # Add the null-space joint efforts to the total joint efforts
                 joint_efforts += tau_null
 
             else:
-                raise ValueError(f"Invalid null-space control method: {self.cfg.null_space_control}.")
+                raise ValueError(f"Invalid null-space control method: {self.cfg.nullspace_control}.")
 
         return joint_efforts

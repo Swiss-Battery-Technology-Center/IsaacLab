@@ -343,6 +343,10 @@ class OperationalSpaceControllerAction(ActionTerm):
         self._damping_ratio_idx = None
         self._resolve_command_indexes()
 
+        # Nullspace position control joint targets
+        self._nullspace_joint_pos_target = None
+        self._resolve_nullspace_joint_pos_targets()
+
     """
     Properties.
     """
@@ -410,6 +414,7 @@ class OperationalSpaceControllerAction(ActionTerm):
             gravity=self._gravity,
             current_joint_pos=self._joint_pos,
             current_joint_vel=self._joint_vel,
+            nullspace_joint_pos_target=self._nullspace_joint_pos_target,
         )
         self._asset.set_joint_effort_target(self._joint_efforts, joint_ids=self._joint_ids)
 
@@ -487,6 +492,35 @@ class OperationalSpaceControllerAction(ActionTerm):
         # Check if any command is left unresolved
         if self.action_dim != cmd_idx:
             raise ValueError("Not all command indexes have been resolved.")
+
+    def _resolve_nullspace_joint_pos_targets(self):
+        """Resolves the nullspace joint pos targets for the operational space controller.
+
+        Raises:
+            ValueError: If the nullspace joint pos targets are set when null space control is not set to 'position'.
+            ValueError: If the nullspace joint pos targets are not set when null space control is set to 'position'.
+            ValueError: If an invalid value is set for nullspace joint pos targets.
+        """
+
+        if self.cfg.nullspace_joint_pos_target != "none" and self.cfg.controller_cfg.nullspace_control != "position":
+            raise ValueError("Nullspace joint targets can only be set when null space control is set to 'position'.")
+
+        if self.cfg.nullspace_joint_pos_target == "none" and self.cfg.controller_cfg.nullspace_control == "position":
+            raise ValueError("Nullspace joint targets must be set when null space control is set to 'position'.")
+
+        if self.cfg.nullspace_joint_pos_target == "zero":
+            # Keep the nullspace joint targets as None as this is later processed as zero in the controller
+            self._nullspace_joint_pos_target = None
+        elif self.cfg.nullspace_joint_pos_target == "center":
+            # Get the center of the robot soft joint limits
+            self._nullspace_joint_pos_target = torch.mean(
+                self._asset.data.soft_joint_pos_limits[:, self._joint_ids, :], dim=-1
+            )
+        elif self.cfg.nullspace_joint_pos_target == "default":
+            # Get the default joint positions
+            self._nullspace_joint_pos_target = self._asset.data.default_joint_pos[:, self._joint_ids]
+        else:
+            raise ValueError("Invalid value for nullspace joint pos targets.")
 
     def _compute_dynamic_quantities(self):
         """Computes the dynamic quantities for operational space control."""

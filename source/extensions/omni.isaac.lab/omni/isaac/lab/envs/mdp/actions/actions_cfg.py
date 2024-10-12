@@ -293,7 +293,9 @@ class OperationalSpaceControllerActionCfg(ActionTermCfg):
     """Scale factor for the position targets. Defaults to 1.0."""
 
     orientation_scale: float = 1.0
-    """Scale factor for the orientation/rotation (quad for pose_abs and or axis-angle for pose_rel) targets. Defaults to 1.0."""
+    """Scale factor for the orientation/rotation (quad for pose_abs and or axis-angle for pose_rel) targets.
+        Defaults to 1.0.
+    """
 
     wrench_scale: float = 1.0
     """Scale factor for the wrench targets. Defaults to 1.0."""
@@ -303,3 +305,9 @@ class OperationalSpaceControllerActionCfg(ActionTermCfg):
 
     damping_ratio_scale: float = 1.0
     """Scale factor for the damping ratio commands. Defaults to 1.0."""
+
+    nullspace_joint_pos_target: str = "none"
+    """The joint targets for the null space control: "none", "zero", "default", "center".
+
+    Note: Functional only when null_space_control is set to "position" within the OperationalSpaceControllerCfg.
+    """
