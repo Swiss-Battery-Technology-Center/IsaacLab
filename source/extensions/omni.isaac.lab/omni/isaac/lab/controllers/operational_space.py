@@ -492,13 +492,13 @@ class OperationalSpaceController:
                 raise ValueError("Null-space control is only applicable for redundant manipulators.")
 
             # Calculate the pseudo-inverse of the Jacobian
-            if self.cfg.inertial_dynamics_decoupling:
-                # Dynamically Consistent Pseudo-Inverse
-                if self._mass_matrix_inv is None or mass_matrix is None:  # FIXME Check if partial works!
-                    raise ValueError("Mass matrix inverse is required for dynamically Consistent Pseudo-Inverse")
+            if self.cfg.inertial_dynamics_decoupling and not self.cfg.partial_inertial_dynamics_decoupling:
+                # Dynamically consistent pseudo-inverse allows decoupling of null space and task space
+                if self._mass_matrix_inv is None or mass_matrix is None:
+                    raise ValueError("Mass matrix inverse is required for dynamically consistent pseudo-inverse")
                 jacobian_pinv_transpose = self._os_mass_matrix_b @ jacobian_b @ self._mass_matrix_inv
             else:
-                # Moore-Penrose Pseudo-Inverse
+                # Moore-Penrose pseudo-inverse if full inertia matrix is not available (e.g., no/partial decoupling)
                 jacobian_pinv_transpose = torch.pinverse(jacobian_b).mT
 
             # Calculate the null-space projector
