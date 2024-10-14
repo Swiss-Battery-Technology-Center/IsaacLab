@@ -483,7 +483,7 @@ class OperationalSpaceController:
 
         # Add null-space control
         # -- Free null-space control
-        if self.cfg.nullspace_control == "free":
+        if self.cfg.nullspace_control == "none":
             # No additional control is applied in the null space.
             pass
         else:

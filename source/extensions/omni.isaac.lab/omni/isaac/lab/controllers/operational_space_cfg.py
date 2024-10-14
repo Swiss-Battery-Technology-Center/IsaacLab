@@ -76,8 +76,8 @@ class OperationalSpaceControllerCfg:
     only the first three elements are used for the feedback loop.
     """
 
-    nullspace_control: str = "free"
-    """The null space control method for redundant manipulators: "free", "position".
+    nullspace_control: str = "none"
+    """The null space control method for redundant manipulators: "none", "position".
 
     Note: "position" is used to drive the redundant manipulator to zero configuration by default. If target_joint_pos
     is provided in the compute() method, it will be driven to this configuration.

@@ -508,7 +508,7 @@ class OperationalSpaceControllerAction(ActionTerm):
         if self.cfg.nullspace_joint_pos_target == "none" and self.cfg.controller_cfg.nullspace_control == "position":
             raise ValueError("Nullspace joint targets must be set when null space control is set to 'position'.")
 
-        if self.cfg.nullspace_joint_pos_target == "zero":
+        if self.cfg.nullspace_joint_pos_target == "zero" or self.cfg.nullspace_joint_pos_target == "none":
             # Keep the nullspace joint targets as None as this is later processed as zero in the controller
             self._nullspace_joint_pos_target = None
         elif self.cfg.nullspace_joint_pos_target == "center":
