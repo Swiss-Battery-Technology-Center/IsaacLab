@@ -108,34 +108,34 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Attach (windows-x86_64/linux-x86_64)",
-            "type": "python",
-            "request": "attach",
-            "port": 3000,
-            "host": "localhost"
-        },
-        {
-            "name": "Python: Train Environment",
+            "name": "Python: Train sbtc-lift-franka-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "Isaac-Reach-Franka-v0", "--headless"],
+            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Play Environment",
+            "name": "Python: Play sbtc-lift-franka-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "Isaac-Reach-Franka-v0", "--num_envs", "32"],
+            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Record sbtc-reach-franka-OSC",
+            "name": "Python: Train sbtc-lift-franka-IA",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
-            "--video", "--video_length", "500"],
+            "args" : ["--task", "SBTC-Lift-Cube-Franka-IA-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
+            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/train.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Play sbtc-lift-franka-IA",
+            "type": "python",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Lift-Cube-Franka-IA-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
@@ -148,11 +148,20 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: RandomAgent sbtc-reach-franka-IA",
+            "name": "Python: RandomAgent sbtc-lift-franka-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-IA-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/source/standalone/environments/random_agent.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Record sbtc-reach-franka-OSC",
+            "type": "python",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Reach-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
+            "--video", "--video_length", "500"],
+            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
         }
     ]
