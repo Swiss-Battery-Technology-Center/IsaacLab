@@ -163,6 +163,15 @@
             "--video", "--video_length", "500"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Record sbtc-lift-franka-OSC",
+            "type": "python",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
+            "--video", "--video_length", "500"],
+            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
+            "console": "integratedTerminal"
         }
     ]
 }
