@@ -33,11 +33,7 @@ RUN echo "conda deactivate && conda activate isaaclab" >> ${HOME}/.bashrc
 
 SHELL ["/opt/miniconda/bin/conda", "run", "-n", "isaaclab", "/bin/bash", "-c"]
 
-# There seems to be a problem with gymnasium version, hence the two lines below to fix its version
-RUN DEBIAN_FRONTEND=noninteractive \
-    pip install gymnasium==0.29.0 && \
-    ${ISAACLAB_PATH}/isaaclab.sh --install && \
-    pip install gymnasium==0.29.0
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh --install
 
 WORKDIR ${ISAACLAB_PATH}/
 
