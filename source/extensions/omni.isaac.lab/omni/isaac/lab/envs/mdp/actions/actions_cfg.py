@@ -310,3 +310,22 @@ class OperationalSpaceControllerActionCfg(ActionTermCfg):
     Note: Functional only when ``nullspace_control`` is set to ``"position"`` within the
         ``OperationalSpaceControllerCfg``.
     """
+
+
+@configclass
+class OperationalSpaceControllerClippedActionCfg(OperationalSpaceControllerActionCfg):
+    """Configuration for clipped operational space controller action term.
+
+    See :class:`OperationalSpaceControllerClippedAction` for more details.
+    """
+
+    class_type: type[ActionTerm] = task_space_actions.OperationalSpaceControllerClippedAction
+
+    position_clip: float = float("inf")
+    """Clip threshold factor for the position target. Defaults to +∞ (no clipping)."""
+
+    orientation_clip: float = float("inf")
+    """Clip threshold factor for the orientation target. Defaults to +∞ (no clipping)."""
+
+    wrench_clip: float = float("inf")
+    """Clip threshold factor for the wrench target. Defaults to +∞ (no clipping)."""
