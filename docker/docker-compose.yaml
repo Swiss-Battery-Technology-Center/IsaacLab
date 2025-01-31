@@ -143,6 +143,9 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
   - type: bind
     source: ../.vscode
     target: ${DOCKER_ISAACLAB_PATH}/.vscode
+  - type: bind
+    source: ../../../usd/
+    target: ${DOCKER_ISAACLAB_PATH}/usd
 
 services:
   # This service is the base Isaac Lab image
