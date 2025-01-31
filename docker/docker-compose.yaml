@@ -126,27 +126,26 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
     target: ${DOCKER_USER_HOME}/.vscode-server
   - type: bind
     source: ../../sbtc-robots/src/kinova/kinova.py
-    target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_assets/omni/isaac/lab_assets/kinova.py
+    target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_assets/isaaclab_assets/robots/kinova.py
     read_only: false
   - type: bind
     source: ../../sbtc-robots/src/franka/franka.py
-    target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_assets/omni/isaac/lab_assets/franka.py
+    target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_assets/isaaclab_assets/robots/franka.py
     read_only: false
   - type: bind
     source: ../../sbtc-robots/src/universal_robots/universal_robots.py
-    target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_assets/omni/isaac/lab_assets/universal_robots.py
+    target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_assets/isaaclab_assets/robots/universal_robots.py
     read_only: false
   - type: bind
     source: ../../sbtc-gym/src/sbtc/
-    target: ${DOCKER_ISAACLAB_PATH}/source/extensions/omni.isaac.lab_tasks/omni/isaac/lab_tasks/sbtc/
-    read_only: false
-  - type: bind
-    source: ../../sbtc-rl/
-    target: ${DOCKER_ISAACLAB_PATH}/source/standalone/sbtc-rl/
+    target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_tasks/isaaclab_tasks/sbtc/
     read_only: false
   - type: bind
     source: ../.vscode
     target: ${DOCKER_ISAACLAB_PATH}/.vscode
+  - type: bind
+    source: ../../../usd/
+    target: ${DOCKER_ISAACLAB_PATH}/usd
 
 services:
   # This service is the base Isaac Lab image

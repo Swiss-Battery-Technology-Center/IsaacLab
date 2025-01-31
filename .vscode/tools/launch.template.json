@@ -16,7 +16,7 @@
             "type": "python",
             "request": "launch",
             "args" : ["--task", "SBTC-Reach-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/train.py",
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
         {
@@ -24,7 +24,7 @@
             "type": "python",
             "request": "launch",
             "args" : ["--task", "SBTC-Reach-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
@@ -32,7 +32,7 @@
             "type": "python",
             "request": "launch",
             "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/train.py",
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
         {
@@ -40,15 +40,15 @@
             "type": "python",
             "request": "launch",
             "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
             "name": "Python: Train sbtc-unscrew-franka-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "1024"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/train.py",
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
         {
@@ -56,7 +56,7 @@
             "type": "python",
             "request": "launch",
             "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
@@ -89,7 +89,7 @@
             "request": "launch",
             "args" : ["--task", "SBTC-Reach-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
             "--video", "--video_length", "500"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
@@ -98,7 +98,7 @@
             "request": "launch",
             "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
             "--video", "--video_length", "500"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
@@ -107,7 +107,7 @@
             "request": "launch",
             "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
             "--video", "--video_length", "500"],
-            "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         }
     ]
