@@ -47,7 +47,7 @@
             "name": "Python: Train sbtc-unscrew-franka-OSC",
             "type": "python",
             "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "1024"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
