@@ -29,9 +29,9 @@ RUN conda update -n base -c defaults conda
 RUN --mount=type=cache,target=/opt/miniconda/pkgs \
     DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh --conda
 
-RUN echo "conda deactivate && conda activate isaaclab" >> ${HOME}/.bashrc
+RUN echo "conda deactivate && conda activate env_isaaclab" >> ${HOME}/.bashrc
 
-SHELL ["/opt/miniconda/bin/conda", "run", "-n", "isaaclab", "/bin/bash", "-c"]
+SHELL ["/opt/miniconda/bin/conda", "run", "-n", "env_isaaclab", "/bin/bash", "-c"]
 
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh --install
 
