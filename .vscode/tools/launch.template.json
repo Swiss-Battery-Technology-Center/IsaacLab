@@ -52,6 +52,15 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Python: Train-wVideo sbtc-unscrew-franka-OSC",
+            "type": "python",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "1024",
+                      "--video", "--video_length", "500", "--video_interval", "4800"],
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Play sbtc-unscrew-franka-OSC",
             "type": "python",
             "request": "launch",
