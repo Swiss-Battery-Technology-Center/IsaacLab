@@ -365,6 +365,11 @@ class OperationalSpaceControllerAction(ActionTerm):
         self._stiffness_scale = torch.tensor(self.cfg.stiffness_scale, device=self.device)
         self._damping_ratio_scale = torch.tensor(self.cfg.damping_ratio_scale, device=self.device)
 
+        # save the clip thresholds as tensors
+        self._position_clip = torch.abs(torch.tensor(self.cfg.position_clip, device=self.device))
+        self._orientation_clip = torch.abs(torch.tensor(self.cfg.orientation_clip, device=self.device))
+        self._wrench_clip = torch.abs(torch.tensor(self.cfg.wrench_clip, device=self.device))
+
         # indexes for the various command elements (e.g., pose_rel, stifness, etc.) within the command tensor
         self._pose_abs_idx = None
         self._pose_rel_idx = None
@@ -677,11 +682,46 @@ class OperationalSpaceControllerAction(ActionTerm):
         if self._pose_abs_idx is not None:
             self._processed_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3] *= self._position_scale
             self._processed_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7] *= self._orientation_scale
+            # Do the clipping on the delta pose wrt the default zero pose
+            zero_pose = torch.zeros(self.num_envs, 7, device=self.device)  # Rotation part quaternion
+            zero_pose[:, 3] = 1.0  # Unit quad has w=1
+            delta_pose = torch.zeros(self.num_envs, 6, device=self.device)  # Rotation part axis-angle
+            delta_pose[:, :3], delta_pose[:, 3:] = math_utils.compute_pose_error(
+                zero_pose[:, :3],
+                zero_pose[:, 3:7],
+                self._processed_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3],
+                self._processed_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7],
+            )
+            delta_pose[:, :3] = torch.clamp(delta_pose[:, :3], -self._position_clip, self._position_clip)
+            delta_pose[:, 3:] = torch.clamp(delta_pose[:, 3:], -self._orientation_clip, self._orientation_clip)
+            (
+                self._processed_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3],
+                self._processed_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7],
+            ) = math_utils.apply_delta_pose(
+                zero_pose[:, :3],
+                zero_pose[:, 3:7],
+                delta_pose,
+            )
         if self._pose_rel_idx is not None:
             self._processed_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3] *= self._position_scale
+            self._processed_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3] = torch.clamp(
+                self._processed_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3],
+                min=-self._position_clip,
+                max=self._position_clip,
+            )
             self._processed_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6] *= self._orientation_scale
+            self._processed_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6] = torch.clamp(
+                self._processed_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6],
+                min=-self._orientation_clip,
+                max=self._orientation_clip,
+            )
         if self._wrench_abs_idx is not None:
             self._processed_actions[:, self._wrench_abs_idx : self._wrench_abs_idx + 6] *= self._wrench_scale
+            self._processed_actions[:, self._wrench_abs_idx : self._wrench_abs_idx + 6] = torch.clamp(
+                self._processed_actions[:, self._wrench_abs_idx : self._wrench_abs_idx + 6],
+                min=-self._wrench_clip,
+                max=self._wrench_clip,
+            )
         if self._stiffness_idx is not None:
             self._processed_actions[:, self._stiffness_idx : self._stiffness_idx + 6] *= self._stiffness_scale
             self._processed_actions[:, self._stiffness_idx : self._stiffness_idx + 6] = torch.clamp(
@@ -697,68 +737,6 @@ class OperationalSpaceControllerAction(ActionTerm):
                 self._processed_actions[:, self._damping_ratio_idx : self._damping_ratio_idx + 6],
                 min=self.cfg.controller_cfg.motion_damping_ratio_limits_task[0],
                 max=self.cfg.controller_cfg.motion_damping_ratio_limits_task[1],
-            )
-
-
-class OperationalSpaceControllerClippedAction(OperationalSpaceControllerAction):
-    r"""Operational space controller clipped action term.
-
-    This action term performs pre-processing of the clipped actions for operational space control.
-
-    """
-
-    cfg: actions_cfg.OperationalSpaceControllerClippedActionCfg
-    """The configuration of the action term."""
-
-    def __init__(self, cfg: actions_cfg.OperationalSpaceControllerClippedActionCfg, env: ManagerBasedEnv):
-        # initialize the action term
-        super().__init__(cfg, env)
-
-        self._position_clip = torch.abs(torch.tensor(self.cfg.position_clip, device=self.device))
-        self._orientation_clip = torch.abs(torch.tensor(self.cfg.orientation_clip, device=self.device))
-        self._wrench_clip = torch.abs(torch.tensor(self.cfg.wrench_clip, device=self.device))
-
-    def _preprocess_actions(self, actions: torch.Tensor):
-        """
-        Overridden to clip pose commands in addition to the standard OSC preprocessing.
-
-        Args:
-            actions (torch.Tensor): The raw actions for operational space control.
-                Shape: (num_envs, action_dim).
-        """
-        # 1. Do the normal OSC preprocessing (scaling, etc.)
-        super()._preprocess_actions(actions)
-
-        if self._pose_abs_idx is not None:  # TODO Test this
-            zero_pose = torch.zeros(self.num_envs, 7, device=self.device)  # Rotation part quaternion
-            zero_pose[:, 3] = 1.0  # Unit quad has w=1
-            delta_pose = torch.zeros(self.num_envs, 6, device=self.device)  # Rotation part axis-angle
-            delta_pose[:, :3], delta_pose[:, 3:] = math_utils.compute_pose_error(
-                zero_pose[:, :3],
-                zero_pose[:, 3:7],
-                self._processed_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3],
-                self._processed_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7],
-            )
-            delta_pose[:, :3].clamp_(-self._position_clip, self._position_clip)
-            delta_pose[:, 3:].clamp_(-self._orientation_clip, self._orientation_clip)
-            (
-                self._processed_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3],
-                self._processed_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7],
-            ) = math_utils.apply_delta_pose(
-                zero_pose[:, :3],
-                zero_pose[:, 3:7],
-                delta_pose,
-            )
-        if self._pose_rel_idx is not None:
-            self._processed_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3].clamp_(
-                min=-self._position_clip, max=self._position_clip
-            )
-            self._processed_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6].clamp_(
-                min=-self._orientation_clip, max=self._orientation_clip
-            )
-        if self._wrench_abs_idx is not None:
-            self._processed_actions[:, self._wrench_abs_idx : self._wrench_abs_idx + 6].clamp_(
-                min=-self._wrench_clip, max=self._wrench_clip
             )
 
     def modify_clip_values(
