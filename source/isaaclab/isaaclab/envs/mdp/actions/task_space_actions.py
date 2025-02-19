@@ -758,3 +758,71 @@ class OperationalSpaceControllerAction(ActionTerm):
         if wrench_clip is not None:
             self.cfg.wrench_clip = wrench_clip
             self._wrench_clip.fill_(wrench_clip)
+
+
+class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction):
+    r"""Operational space controller action term, filtered.
+
+    This action term performs pre-processing of the actions for operational space control, filtered with first-order
+    low-pass filter.
+    """
+
+    cfg: actions_cfg.OperationalSpaceControllerActionFilteredCfg
+
+    def __init__(self, cfg: actions_cfg.OperationalSpaceControllerActionFilteredCfg, env: ManagerBasedEnv):
+        # initialize the action term
+        super().__init__(cfg, env)
+
+        self._lowpass_filter_bandwidth_rad = (
+            torch.tensor(self.cfg.lowpass_filter_cutoff, device=self.device) * 2 * torch.pi
+        )
+        self._lowpass_filter_bandwidth_dT = self._sim_dt * env.cfg.decimation
+        self._lowpass_filter_alpha = (
+            self._lowpass_filter_bandwidth_rad
+            * self._lowpass_filter_bandwidth_dT
+            / (1.0 + self._lowpass_filter_bandwidth_rad * self._lowpass_filter_bandwidth_dT)
+        )
+
+        self._processed_actions_prev = torch.zeros_like(self._processed_actions)
+        self._filtered_processed_actions = torch.zeros_like(self._processed_actions)
+
+    def process_actions(self, actions: torch.Tensor):
+        """Pre-processes the raw actions, filters them, and sets them as commands for for operational space control.
+
+        Args:
+            actions (torch.Tensor): The raw actions for operational space control. It is a tensor of
+                shape (``num_envs``, ``action_dim``).
+        """
+
+        # Update ee pose, which would be used by relative targets (i.e., pose_rel)
+        self._compute_ee_pose()
+
+        # Update task frame pose w.r.t. the root frame.
+        self._compute_task_frame_pose()
+
+        # Pre-process the raw actions for operational space control.
+        self._preprocess_actions(actions)
+
+        # Filter all the processed actions, using, y = alpha * x + (1 - alpha) * y_prev
+        self._filtered_processed_actions[:] = (
+            self._lowpass_filter_alpha * self._processed_actions
+            + (1 - self._lowpass_filter_alpha) * self._filtered_processed_actions
+        )
+
+        # set command into controller
+        self._osc.set_command(
+            command=self._filtered_processed_actions,
+            current_ee_pose_b=self._ee_pose_b,
+            current_task_frame_pose_b=self._task_frame_pose_b,
+        )
+
+    def modify_lpf_cutoff(self, cutoff_freq: float):
+        """Modify the cutoff frequency of the low-pass filter."""
+
+        self.cfg.lowpass_filter_cutoff = cutoff_freq
+        self._lowpass_filter_bandwidth_rad.fill_(cutoff_freq * 2 * torch.pi)
+        self._lowpass_filter_alpha.fill_(
+            self._lowpass_filter_bandwidth_rad
+            * self._lowpass_filter_bandwidth_dT
+            / (1.0 + self._lowpass_filter_bandwidth_rad * self._lowpass_filter_bandwidth_dT)
+        )
