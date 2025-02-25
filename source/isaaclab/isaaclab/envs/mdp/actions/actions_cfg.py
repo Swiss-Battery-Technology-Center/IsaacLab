@@ -330,5 +330,8 @@ class OperationalSpaceControllerActionFilteredCfg(OperationalSpaceControllerActi
 
     class_type: type[ActionTerm] = task_space_actions.OperationalSpaceControllerActionFiltered
 
-    lowpass_filter_cutoff: float = 10.0
-    """The cutoff frequency of the low-pass filter in Hz. Defaults to 10.0 Hz."""
+    position_lpf_cutoff: float = 10.0
+    """The cutoff frequency of the position low-pass filter in Hz. Defaults to 10.0 Hz."""
+
+    orientation_lpf_cutoff: float = 10.0
+    """The cutoff frequency of the orientation low-pass filter in Hz. Defaults to 10.0 Hz."""

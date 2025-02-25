@@ -773,14 +773,18 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
         # initialize the action term
         super().__init__(cfg, env)
 
-        self._lowpass_filter_bandwidth_rad = (
-            torch.tensor(self.cfg.lowpass_filter_cutoff, device=self.device) * 2 * torch.pi
+        self._pos_lpf_bandwidth_rad = torch.tensor(self.cfg.position_lpf_cutoff, device=self.device) * 2 * torch.pi
+        self._ori_lpf_bandwidth_rad = torch.tensor(self.cfg.orientation_lpf_cutoff, device=self.device) * 2 * torch.pi
+        self._lpf_bandwidth_dT = self._sim_dt * env.cfg.decimation
+        self._pos_lpf_alpha = (
+            self._pos_lpf_bandwidth_rad
+            * self._lpf_bandwidth_dT
+            / (1.0 + self._pos_lpf_bandwidth_rad * self._lpf_bandwidth_dT)
         )
-        self._lowpass_filter_bandwidth_dT = self._sim_dt * env.cfg.decimation
-        self._lowpass_filter_alpha = (
-            self._lowpass_filter_bandwidth_rad
-            * self._lowpass_filter_bandwidth_dT
-            / (1.0 + self._lowpass_filter_bandwidth_rad * self._lowpass_filter_bandwidth_dT)
+        self._ori_lpf_alpha = (
+            self._ori_lpf_bandwidth_rad
+            * self._lpf_bandwidth_dT
+            / (1.0 + self._ori_lpf_bandwidth_rad * self._lpf_bandwidth_dT)
         )
 
         self._unfiltered_scaled_actions = torch.zeros_like(self._processed_actions)
@@ -818,11 +822,16 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
                 :, self._pose_abs_idx + 3 : self._pose_abs_idx + 7
             ] *= self._orientation_scale
             # Filtering
-            self._unclipped_filtered_actions[:, self._pose_abs_idx : self._pose_abs_idx + 7] = (
-                self._lowpass_filter_alpha
-                * self._unfiltered_scaled_actions[:, self._pose_abs_idx : self._pose_abs_idx + 7]
-                + (1 - self._lowpass_filter_alpha)
-                * self._unclipped_filtered_actions[:, self._pose_abs_idx : self._pose_abs_idx + 7]
+            self._unclipped_filtered_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3] = (
+                self._pos_lpf_alpha * self._unfiltered_scaled_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3]
+                + (1 - self._pos_lpf_alpha)
+                * self._unclipped_filtered_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3]
+            )
+            self._unclipped_filtered_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7] = (
+                self._ori_lpf_alpha
+                * self._unfiltered_scaled_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7]
+                + (1 - self._ori_lpf_alpha)
+                * self._unclipped_filtered_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7]
             )
             # Clipping: on the delta pose wrt the default zero pose
             zero_pose = torch.zeros(self.num_envs, 7, device=self.device)  # Rotation part quaternion
@@ -851,11 +860,16 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
                 :, self._pose_rel_idx + 3 : self._pose_rel_idx + 6
             ] *= self._orientation_scale
             # Filtering
-            self._unclipped_filtered_actions[:, self._pose_rel_idx : self._pose_rel_idx + 6] = (
-                self._lowpass_filter_alpha
-                * self._unfiltered_scaled_actions[:, self._pose_rel_idx : self._pose_rel_idx + 6]
-                + (1 - self._lowpass_filter_alpha)
-                * self._unclipped_filtered_actions[:, self._pose_rel_idx : self._pose_rel_idx + 6]
+            self._unclipped_filtered_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3] = (
+                self._pos_lpf_alpha * self._unfiltered_scaled_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3]
+                + (1 - self._pos_lpf_alpha)
+                * self._unclipped_filtered_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3]
+            )
+            self._unclipped_filtered_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6] = (
+                self._ori_lpf_alpha
+                * self._unfiltered_scaled_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6]
+                + (1 - self._ori_lpf_alpha)
+                * self._unclipped_filtered_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6]
             )
             # Clipping
             self._processed_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3] = torch.clamp(
@@ -892,13 +906,27 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
                 max=self.cfg.controller_cfg.motion_damping_ratio_limits_task[1],
             )
 
-    def modify_lpf_cutoff(self, cutoff_freq: float):
-        """Modify the cutoff frequency of the low-pass filter."""
+    def modify_lpf_cutoff(self, pos_lpf_cutoff_f: float, ori_lpf_cutoff_f: float):
+        """Modify the cutoff frequency of the low-pass filter.
 
-        self.cfg.lowpass_filter_cutoff = cutoff_freq
-        self._lowpass_filter_bandwidth_rad.fill_(cutoff_freq * 2 * torch.pi)
-        self._lowpass_filter_alpha.fill_(
-            self._lowpass_filter_bandwidth_rad
-            * self._lowpass_filter_bandwidth_dT
-            / (1.0 + self._lowpass_filter_bandwidth_rad * self._lowpass_filter_bandwidth_dT)
+        Args:
+            pos_lpf_cutoff_f (float): The new cutoff frequency for the position low-pass filter.
+            ori_lpf_cutoff_f (float): The new cutoff frequency for the orientation low-pass filter.
+        """
+
+        self.cfg.position_lpf_cutoff = pos_lpf_cutoff_f
+        self.cfg.orientation_lpf_cutoff = pos_lpf_cutoff_f
+
+        self._pos_lpf_bandwidth_rad.fill_(pos_lpf_cutoff_f * 2 * torch.pi)
+        self._ori_lpf_bandwidth_rad.fill_(ori_lpf_cutoff_f * 2 * torch.pi)
+
+        self._pos_lpf_alpha.fill_(
+            self._pos_lpf_bandwidth_rad
+            * self._lpf_bandwidth_dT
+            / (1.0 + self._pos_lpf_bandwidth_rad * self._lpf_bandwidth_dT)
+        )
+        self._ori_lpf_alpha.fill_(
+            self._ori_lpf_bandwidth_rad
+            * self._lpf_bandwidth_dT
+            / (1.0 + self._ori_lpf_bandwidth_rad * self._lpf_bandwidth_dT)
         )
