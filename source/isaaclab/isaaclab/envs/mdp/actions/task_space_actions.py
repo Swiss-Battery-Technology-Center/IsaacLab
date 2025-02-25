@@ -783,38 +783,114 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
             / (1.0 + self._lowpass_filter_bandwidth_rad * self._lowpass_filter_bandwidth_dT)
         )
 
-        self._processed_actions_prev = torch.zeros_like(self._processed_actions)
-        self._filtered_processed_actions = torch.zeros_like(self._processed_actions)
+        self._unfiltered_scaled_actions = torch.zeros_like(self._processed_actions)
+        self._unclipped_filtered_actions = torch.zeros_like(self._processed_actions)
 
-    def process_actions(self, actions: torch.Tensor):
-        """Pre-processes the raw actions, filters them, and sets them as commands for for operational space control.
+    def reset(self, env_ids: Sequence[int] | None = None) -> None:
+        """Resets the raw actions and the sensors if available.
+
+        Args:
+            env_ids (Sequence[int] | None): The environment indices to reset. If ``None``, all environments are reset.
+        """
+        super().reset(env_ids)
+        self._unclipped_filtered_actions[env_ids] = 0.0
+
+    def _preprocess_actions(self, actions: torch.Tensor):
+        """Pre-processes the raw actions and filters them for operational space control.
+
+        Note: Filtering using, y = alpha * x + (1 - alpha) * y_prev
 
         Args:
             actions (torch.Tensor): The raw actions for operational space control. It is a tensor of
                 shape (``num_envs``, ``action_dim``).
         """
 
-        # Update ee pose, which would be used by relative targets (i.e., pose_rel)
-        self._compute_ee_pose()
+        # Initialize the actions
+        self._raw_actions[:] = actions
+        self._unfiltered_scaled_actions[:] = self._raw_actions
+        self._processed_actions[:] = self._raw_actions
 
-        # Update task frame pose w.r.t. the root frame.
-        self._compute_task_frame_pose()
-
-        # Pre-process the raw actions for operational space control.
-        self._preprocess_actions(actions)
-
-        # Filter all the processed actions, using, y = alpha * x + (1 - alpha) * y_prev
-        self._filtered_processed_actions[:] = (
-            self._lowpass_filter_alpha * self._processed_actions
-            + (1 - self._lowpass_filter_alpha) * self._filtered_processed_actions
-        )
-
-        # set command into controller
-        self._osc.set_command(
-            command=self._filtered_processed_actions,
-            current_ee_pose_b=self._ee_pose_b,
-            current_task_frame_pose_b=self._task_frame_pose_b,
-        )
+        # Go through the command types one by one, and apply the pre-processing if needed.
+        if self._pose_abs_idx is not None:
+            # Scaling
+            self._unfiltered_scaled_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3] *= self._position_scale
+            self._unfiltered_scaled_actions[
+                :, self._pose_abs_idx + 3 : self._pose_abs_idx + 7
+            ] *= self._orientation_scale
+            # Filtering
+            self._unclipped_filtered_actions[:, self._pose_abs_idx : self._pose_abs_idx + 7] = (
+                self._lowpass_filter_alpha
+                * self._unfiltered_scaled_actions[:, self._pose_abs_idx : self._pose_abs_idx + 7]
+                + (1 - self._lowpass_filter_alpha)
+                * self._unclipped_filtered_actions[:, self._pose_abs_idx : self._pose_abs_idx + 7]
+            )
+            # Clipping: on the delta pose wrt the default zero pose
+            zero_pose = torch.zeros(self.num_envs, 7, device=self.device)  # Rotation part quaternion
+            zero_pose[:, 3] = 1.0  # Unit quad has w=1
+            delta_pose = torch.zeros(self.num_envs, 6, device=self.device)  # Rotation part axis-angle
+            delta_pose[:, :3], delta_pose[:, 3:] = math_utils.compute_pose_error(
+                zero_pose[:, :3],
+                zero_pose[:, 3:7],
+                self._unclipped_filtered_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3],
+                self._unclipped_filtered_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7],
+            )
+            delta_pose[:, :3] = torch.clamp(delta_pose[:, :3], -self._position_clip, self._position_clip)
+            delta_pose[:, 3:] = torch.clamp(delta_pose[:, 3:], -self._orientation_clip, self._orientation_clip)
+            (
+                self._processed_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3],
+                self._processed_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7],
+            ) = math_utils.apply_delta_pose(
+                zero_pose[:, :3],
+                zero_pose[:, 3:7],
+                delta_pose,
+            )
+        if self._pose_rel_idx is not None:
+            # Scaling
+            self._unfiltered_scaled_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3] *= self._position_scale
+            self._unfiltered_scaled_actions[
+                :, self._pose_rel_idx + 3 : self._pose_rel_idx + 6
+            ] *= self._orientation_scale
+            # Filtering
+            self._unclipped_filtered_actions[:, self._pose_rel_idx : self._pose_rel_idx + 6] = (
+                self._lowpass_filter_alpha
+                * self._unfiltered_scaled_actions[:, self._pose_rel_idx : self._pose_rel_idx + 6]
+                + (1 - self._lowpass_filter_alpha)
+                * self._unclipped_filtered_actions[:, self._pose_rel_idx : self._pose_rel_idx + 6]
+            )
+            # Clipping
+            self._processed_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3] = torch.clamp(
+                self._unclipped_filtered_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3],
+                min=-self._position_clip,
+                max=self._position_clip,
+            )
+            self._processed_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6] = torch.clamp(
+                self._unclipped_filtered_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6],
+                min=-self._orientation_clip,
+                max=self._orientation_clip,
+            )
+        if self._wrench_abs_idx is not None:
+            self._processed_actions[:, self._wrench_abs_idx : self._wrench_abs_idx + 6] *= self._wrench_scale
+            self._processed_actions[:, self._wrench_abs_idx : self._wrench_abs_idx + 6] = torch.clamp(
+                self._processed_actions[:, self._wrench_abs_idx : self._wrench_abs_idx + 6],
+                min=-self._wrench_clip,
+                max=self._wrench_clip,
+            )
+        if self._stiffness_idx is not None:
+            self._processed_actions[:, self._stiffness_idx : self._stiffness_idx + 6] *= self._stiffness_scale
+            self._processed_actions[:, self._stiffness_idx : self._stiffness_idx + 6] = torch.clamp(
+                self._processed_actions[:, self._stiffness_idx : self._stiffness_idx + 6],
+                min=self.cfg.controller_cfg.motion_stiffness_limits_task[0],
+                max=self.cfg.controller_cfg.motion_stiffness_limits_task[1],
+            )
+        if self._damping_ratio_idx is not None:
+            self._processed_actions[
+                :, self._damping_ratio_idx : self._damping_ratio_idx + 6
+            ] *= self._damping_ratio_scale
+            self._processed_actions[:, self._damping_ratio_idx : self._damping_ratio_idx + 6] = torch.clamp(
+                self._processed_actions[:, self._damping_ratio_idx : self._damping_ratio_idx + 6],
+                min=self.cfg.controller_cfg.motion_damping_ratio_limits_task[0],
+                max=self.cfg.controller_cfg.motion_damping_ratio_limits_task[1],
+            )
 
     def modify_lpf_cutoff(self, cutoff_freq: float):
         """Modify the cutoff frequency of the low-pass filter."""
