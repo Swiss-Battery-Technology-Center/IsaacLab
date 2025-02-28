@@ -930,3 +930,73 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
             * self._lpf_bandwidth_dT
             / (1.0 + self._ori_lpf_bandwidth_rad * self._lpf_bandwidth_dT)
         )
+
+    def modify_pd_gains(
+        self,
+        p_gains: torch.Tensor | None = None,
+        d_gains: torch.Tensor | None = None,
+        current_task_frame_pose_b: torch.Tensor | None = None,
+    ):
+        """Modify the PD gains of the operational space controller.
+
+        Args:
+            p_gains: The new proportional gains for the operational space controller. Tensor of shape (``num_envs``,
+            ``6``). If None, the current
+                value is kept.
+            d_gains: The new derivative gains for the operational space controller. Tensor of shape (``num_envs``,
+            ``6``). If None, the current value is kept.
+            current_task_frame_pose_b: Current pose of the task frame, in root frame, in which the targets and the
+                (motion/wrench) control axes are defined. It is a tensor of shape (``num_envs``, 7),
+                containing position and the quaternion ``(w, x, y, z)``. Defaults to None.
+        """
+
+        if p_gains is not None:
+
+            # Check the dimension of p gains
+            if p_gains.shape != (self.num_envs, 6):
+                raise ValueError(
+                    f"Invalid shape for the proportional gains. Expected: (num_envs, 6), Got: {p_gains.shape}"
+                )
+
+            self._osc._motion_p_gains_task = self._osc._selection_matrix_motion_task @ torch.diag_embed(p_gains)
+            if d_gains is None:
+                self._osc._motion_d_gains_task = torch.diag_embed(
+                    2
+                    * torch.diagonal(self._osc._motion_p_gains_task, dim1=-2, dim2=-1).sqrt()
+                    * torch.as_tensor(
+                        self._osc.cfg.motion_damping_ratio_task, dtype=torch.float, device=self._osc._device
+                    ).reshape(1, -1)
+                )
+
+        if d_gains is not None:
+
+            # Check the dimension of d gains
+            if d_gains.shape != (self.num_envs, 6):
+                raise ValueError(
+                    f"Invalid shape for the derivative gains. Expected: (num_envs, 6), Got: {d_gains.shape}"
+                )
+
+            self._osc._motion_d_gains_task = torch.diag_embed(
+                2 * torch.diagonal(self._osc._motion_p_gains_task, dim1=-2, dim2=-1).sqrt() * d_gains
+            )
+
+        # Project the task frame gains to the root frame if needed
+        if p_gains is not None or d_gains is not None:
+
+            if current_task_frame_pose_b is None:
+                current_task_frame_pose_b = torch.tensor(
+                    [[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]] * self.num_envs, device=self._osc._device
+                )
+
+            # Rotation of task frame wrt root frame, converts a coordinate from task frame to root frame.
+            R_task_b = math_utils.matrix_from_quat(current_task_frame_pose_b[:, 3:])
+            # Rotation of root frame wrt task frame, converts a coordinate from root frame to task frame.
+            R_b_task = R_task_b.mT
+
+            # Transform motion control stiffness gains from task frame to root frame
+            self._osc._motion_p_gains_b[:, 0:3, 0:3] = R_task_b @ self._osc._motion_p_gains_task[:, 0:3, 0:3] @ R_b_task
+            self._osc._motion_p_gains_b[:, 3:6, 3:6] = R_task_b @ self._osc._motion_p_gains_task[:, 3:6, 3:6] @ R_b_task
+
+            # Transform motion control damping gains from task frame to root frame
+            self._osc._motion_d_gains_b[:, 0:3, 0:3] = R_task_b @ self._osc._motion_d_gains_task[:, 0:3, 0:3] @ R_b_task
+            self._osc._motion_d_gains_b[:, 3:6, 3:6] = R_task_b @ self._osc._motion_d_gains_task[:, 3:6, 3:6] @ R_b_task
