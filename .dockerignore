@@ -21,3 +21,5 @@ recordings/
 **/*.egg-info/
 # ignore isaac sim symlink
 _isaac_sim?
+# SBTC: ignore isaaclab eureka symlink
+_isaaclab_eureka

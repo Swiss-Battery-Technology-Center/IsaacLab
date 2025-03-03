@@ -146,7 +146,10 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
   - type: bind
     source: ../../../usd/
     target: ${DOCKER_ISAACLAB_PATH}/usd
-
+  - type: bind
+    source: ../../IsaacLabEureka/
+    target: ${DOCKER_ISAACLAB_PATH}/../IsaacLabEureka
+  
 services:
   # This service is the base Isaac Lab image
   isaac-lab-base:
