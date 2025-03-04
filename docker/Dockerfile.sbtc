@@ -40,13 +40,11 @@ WORKDIR ${ISAACLAB_PATH}/
 # Copy additional scripts
 COPY docker/sbtc/bash_scripts/runisaac.sh ./
 
-# Setup environment and symbolic links
-RUN ln -s "/docs" ${ISAACLAB_PATH}/_docs && \
-    echo "export LIVESTREAM=2" >> ${HOME}/.bashrc
-
 # Install packages that do not install correctly during setup
-RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/_isaac_sim/python.sh -m pip install psutil && \
-    pip install torch-tb-profiler
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install psutil torch-tb-profiler
+
+# Setup environment and symbolic links
+RUN echo "export LIVESTREAM=2" >> ${HOME}/.bashrc
 
 # Set up a symbolic link between the installed Isaac Lab Eureka root folder and _isaaclab_eureka in the Isaac Lab directory
 RUN ln -sf ${ISAACLAB_PATH}/../IsaacLabEureka ${ISAACLAB_PATH}/_isaaclab_eureka
