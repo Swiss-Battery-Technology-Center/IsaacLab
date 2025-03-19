@@ -30,6 +30,14 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Python: Play-skrl sbtc-unscrew-franka-OSC",
+            "type": "python",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/skrl/play.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Train-rsl_rl sbtc-unscrew-franka-OSC",
             "type": "python",
             "request": "launch",
@@ -39,7 +47,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Play sbtc-unscrew-franka-OSC",
+            "name": "Python: Play-rsl_rl sbtc-unscrew-franka-OSC",
             "type": "python",
             "request": "launch",
             "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
