@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug Eureka ",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/_isaaclab_eureka/scripts/train.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Eureka ",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/_isaaclab_eureka/scripts/train.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
@@ -113,20 +127,12 @@
         {
             "name": "Python: Record sbtc-unscrew-franka-OSC",
             "type": "python",
-            "request": "launch",
+            "request": "launch",s
             "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
             "--video", "--video_length", "500"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
-        {
-            "name": "Python: Debug Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-
         {
             "name": "Debug Eureka on Direct NutThread",
             "type": "debugpy",
@@ -134,22 +140,7 @@
             "args" : ["--task", "Isaac-Factory-NutThread-Direct-v0", "--max_training_iterations", "5", "--rl_library", "rl_games"],
             "program": "${workspaceFolder}/_isaaclab_eureka/scripts/train.py",
             "console": "integratedTerminal"
-        },
-        {
-            "name": "Debug Eureka on Manager Based Franka Open Drawer",
-            "type": "debugpy",
-            "request": "launch",
-            "args" : ["--task", "Isaac-Open-Drawer-Franka-v0", "--max_training_iterations", "100", "--rl_library", "rsl_rl", "--env_type", "manager_based"],
-            "program": "${workspaceFolder}/_isaaclab_eureka/scripts/train.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Debug Eureka on Manager Based sbtc unscrew",
-            "type": "debugpy",
-            "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-v0", "--max_training_iterations", "100", "--rl_library", "rsl_rl", "--env_type", "manager_based"],
-            "program": "${workspaceFolder}/_isaaclab_eureka/scripts/train.py",
-            "console": "integratedTerminal"
         }
+
     ]
 }
