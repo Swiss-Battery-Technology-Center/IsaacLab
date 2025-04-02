@@ -38,6 +38,9 @@ x-default-isaac-lab-volumes: &default-isaac-lab-volumes
     source: ../source
     target: ${DOCKER_ISAACLAB_PATH}/source
   - type: bind
+    source: ../scripts
+    target: ${DOCKER_ISAACLAB_PATH}/scripts
+  - type: bind
     source: ../docs
     target: ${DOCKER_ISAACLAB_PATH}/docs
   - type: bind
@@ -149,7 +152,7 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
   - type: bind
     source: ../../IsaacLabEureka/
     target: ${DOCKER_ISAACLAB_PATH}/../IsaacLabEureka
-  
+
 services:
   # This service is the base Isaac Lab image
   isaac-lab-base:
@@ -209,35 +212,12 @@ services:
       - .env.base
       - .env.sbtc
     build:
-      context: ../
-      dockerfile: docker/Dockerfile.sbtc
+      context: ../../
+      dockerfile: IsaacLab/docker/Dockerfile.sbtc
       args:
         - ISAACLAB_PATH_ARG=${DOCKER_ISAACLAB_PATH}
     image: ${SBTC_IMAGE_NAME:-NONE}
     container_name: isaac-lab-sbtc #container_name: ${CONTAINER_NAME}
-    environment: *default-isaac-lab-environment
-    volumes: *default-isaac-lab-sbtc-volumes
-    network_mode: host
-    deploy: *default-isaac-lab-deploy
-    entrypoint: bash
-    stdin_open: true
-    tty: true
-
-  isaac-lab-sbtc-ros2:
-    profiles: [ "sbtc-ros2" ]
-    env_file:
-      - .env.base
-      - .env.sbtc
-      - .env.sbtc-ros2
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.sbtc-ros2
-      args:
-        - ISAACLAB_PATH_ARG=${DOCKER_ISAACLAB_PATH}
-        - ROS2_APT_PACKAGE=${ROS2_APT_PACKAGE:-NONE}
-        #- DOCKER_USER_HOME=${DOCKER_USER_HOME}
-    image: ${SBTC_ROS2_IMAGE_NAME:-NONE}
-    container_name: isaac-lab-sbtc-ros2
     environment: *default-isaac-lab-environment
     volumes: *default-isaac-lab-sbtc-volumes
     network_mode: host

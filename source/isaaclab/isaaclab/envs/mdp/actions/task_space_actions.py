@@ -1085,3 +1085,72 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
             # Transform motion control damping gains from task frame to root frame
             self._osc._motion_d_gains_b[:, 0:3, 0:3] = R_task_b @ self._osc._motion_d_gains_task[:, 0:3, 0:3] @ R_b_task
             self._osc._motion_d_gains_b[:, 3:6, 3:6] = R_task_b @ self._osc._motion_d_gains_task[:, 3:6, 3:6] @ R_b_task
+
+
+class OperationalSpaceControllerActionFilteredDeadzone(OperationalSpaceControllerActionFiltered):
+    r"""Operational space controller action term, filtered and with deadzones.
+
+    This action term performs pre-processing of the actions for operational space control, filtered with first-order
+    low-pass filter and passeses the joint torques through a deadzone.
+    """
+
+    cfg: actions_cfg.OperationalSpaceControllerActionFilteredDeadzoneCfg
+
+    def __init__(self, cfg: actions_cfg.OperationalSpaceControllerActionFilteredDeadzoneCfg, env: ManagerBasedEnv):
+        # initialize the action term
+        super().__init__(cfg, env)
+
+        self._joint_effort_deadzone_abs = torch.zeros(self.num_envs, self._num_DoF, 2, device=self.device)
+        self._joint_efforts_net = self._joint_efforts.clone()
+
+    def apply_actions(self):
+        """Computes the joint efforts for operational space control and applies them to the articulation."""
+
+        # Apply the filtered actions
+        super().apply_actions()
+
+        self._joint_efforts_net[:] = self._joint_efforts
+
+        # Make sure self._joint_torque_deadzone_abs has all positive elements
+        self._joint_effort_deadzone_abs = torch.abs(self._joint_effort_deadzone_abs)
+
+        # Create masks based on the deadzone thresholds.
+        # For negative efforts: check if effort < -deadzone[...,0]
+        neg_mask = self._joint_efforts_net < -self._joint_effort_deadzone_abs[..., 0]
+        # For positive efforts: check if effort > deadzone[...,1]
+        pos_mask = self._joint_efforts_net > self._joint_effort_deadzone_abs[..., 1]
+
+        # Compute the adjusted efforts:
+        # If a positive effort is above the threshold, subtract the positive threshold.
+        # If a negative effort is below the threshold, add the negative threshold.
+        # Otherwise, set the effort to zero.
+        self._joint_efforts_net[:] = torch.where(
+            pos_mask,
+            self._joint_efforts_net - self._joint_effort_deadzone_abs[..., 1],
+            torch.where(
+                neg_mask,
+                self._joint_efforts_net + self._joint_effort_deadzone_abs[..., 0],
+                torch.zeros_like(self._joint_efforts_net),
+            ),
+        )
+        # Apply the joint efforts to the articulation
+        self._asset.set_joint_effort_target(self._joint_efforts_net, joint_ids=self._joint_ids)
+
+    def modify_joint_effort_deadzone(self, joint_effort_deadzone_abs: torch.tensor):
+        """Modify the joint effort deadzone.
+
+        Args:
+            joint_effort_deadzone_abs (torch.tensor): The new joint effort deadzone. It should be a tensor of shape
+                (``num_envs``, ``num_DoF``, 2), where the last dimension contains the lower and upper deadzone
+                thresholds.
+        """
+
+        # Check the dimension of joint_effort_deadzone_abs
+        if joint_effort_deadzone_abs.shape != (self.num_envs, self._num_DoF, 2):
+            raise ValueError(
+                "Invalid shape for the joint effort deadzone. Expected: (num_envs, num_DoF, 2), "
+                f"Got: {joint_effort_deadzone_abs.shape}"
+            )
+
+        # Modify the joint effort deadzone
+        self._joint_effort_deadzone_abs[:] = torch.abs(joint_effort_deadzone_abs)
