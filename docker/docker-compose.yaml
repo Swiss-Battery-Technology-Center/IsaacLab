@@ -226,29 +226,6 @@ services:
     stdin_open: true
     tty: true
 
-  isaac-lab-sbtc-ros2:
-    profiles: [ "sbtc-ros2" ]
-    env_file:
-      - .env.base
-      - .env.sbtc
-      - .env.sbtc-ros2
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.sbtc-ros2
-      args:
-        - ISAACLAB_PATH_ARG=${DOCKER_ISAACLAB_PATH}
-        - ROS2_APT_PACKAGE=${ROS2_APT_PACKAGE:-NONE}
-        #- DOCKER_USER_HOME=${DOCKER_USER_HOME}
-    image: ${SBTC_ROS2_IMAGE_NAME:-NONE}
-    container_name: isaac-lab-sbtc-ros2
-    environment: *default-isaac-lab-environment
-    volumes: *default-isaac-lab-sbtc-volumes
-    network_mode: host
-    deploy: *default-isaac-lab-deploy
-    entrypoint: bash
-    stdin_open: true
-    tty: true
-
 volumes:
   # isaac-sim
   isaac-cache-kit:
