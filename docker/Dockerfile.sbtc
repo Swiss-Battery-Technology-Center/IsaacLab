@@ -11,8 +11,6 @@
 FROM isaac-lab-base AS isaac-lab-sbtc
 
 ARG ISAACLAB_PATH_ARG
-ARG OPENROUTER_API_KEY
-
 ENV ISAACLAB_PATH=${ISAACLAB_PATH_ARG}
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install wget
@@ -54,7 +52,7 @@ RUN cd ${ISAACLAB_PATH}/_isaaclab_eureka/source/isaaclab_eureka && \
     DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e .
 
 # Add symbolic links
-RUN echo 'export OPENROUTER_API_KEY="${OPENROUTER_API_KEY}"' >> ${HOME}/.bashrc
+RUN echo 'source ${ISAACLAB_PATH}/_isaaclab_eureka/api_keys/api_key_importer.sh' >> ${HOME}/.bashrc
 RUN echo "export LIVESTREAM=2" >> ${HOME}/.bashrc
 
 # Copy additional scripts
