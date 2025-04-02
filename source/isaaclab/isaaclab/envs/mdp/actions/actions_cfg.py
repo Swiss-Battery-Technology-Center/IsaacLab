@@ -325,7 +325,7 @@ class OperationalSpaceControllerActionCfg(ActionTermCfg):
 class OperationalSpaceControllerActionFilteredCfg(OperationalSpaceControllerActionCfg):
     """Configuration for filtered operational space controller action term.
 
-    See :class:`OperationalSpaceControllerFilteredAction` for more details.
+    See :class:`OperationalSpaceControllerActionFiltered` for more details.
     """
 
     class_type: type[ActionTerm] = task_space_actions.OperationalSpaceControllerActionFiltered
@@ -335,3 +335,13 @@ class OperationalSpaceControllerActionFilteredCfg(OperationalSpaceControllerActi
 
     orientation_lpf_cutoff: float = 10.0
     """The cutoff frequency of the orientation low-pass filter in Hz. Defaults to 10.0 Hz."""
+
+
+@configclass
+class OperationalSpaceControllerActionFilteredDeadzoneCfg(OperationalSpaceControllerActionFilteredCfg):
+    """Configuration for filtered operational space controller action term with joint torque deadzones.
+
+    See :class:`OperationalSpaceControllerActionFilteredDeadzone` for more details.
+    """
+
+    class_type: type[ActionTerm] = task_space_actions.OperationalSpaceControllerActionFilteredDeadzone
