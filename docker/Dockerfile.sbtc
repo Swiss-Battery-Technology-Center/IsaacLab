@@ -60,8 +60,5 @@ COPY IsaacLab/docker/sbtc/bash_scripts/runisaac.sh ./
 # Fix the missing typing_extensions
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/_isaac_sim/python.sh -m pip install typing_extensions
 
-# Setup environment and symbolic links
-RUN ln -s "/docs" ${ISAACLAB_PATH}/_docs
-
 # Setup vscode
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -v
