@@ -11,9 +11,15 @@
 FROM isaac-lab-base AS isaac-lab-sbtc
 
 ARG ISAACLAB_PATH_ARG
+ARG OPENROUTER_API_KEY
+
 ENV ISAACLAB_PATH=${ISAACLAB_PATH_ARG}
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install wget
+
+# Remove these for the moment since they create issues
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/_isaac_sim/python.sh -m pip install --upgrade pip && \
+    ${ISAACLAB_PATH}/_isaac_sim/python.sh -m pip uninstall -y pydantic pydantic-core
 
 # Install Miniconda and configure the environment
 RUN DEBIAN_FRONTEND=noninteractive \
@@ -33,20 +39,31 @@ RUN echo "conda deactivate && conda activate env_isaaclab" >> ${HOME}/.bashrc
 
 SHELL ["/opt/miniconda/bin/conda", "run", "-n", "env_isaaclab", "/bin/bash", "-c"]
 
+# Install back pydantic and pydantic-core
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install pydantic pydantic-core torch-tb-profiler
+
+# Install Isaac Lab
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh --install
 
 WORKDIR ${ISAACLAB_PATH}/
 
+# Install Isaac Lab Eureka
+COPY IsaacLabEureka/ ${ISAACLAB_PATH}/../IsaacLabEureka/
+RUN ln -sf ${ISAACLAB_PATH}/../IsaacLabEureka ${ISAACLAB_PATH}/_isaaclab_eureka
+RUN cd ${ISAACLAB_PATH}/_isaaclab_eureka/source/isaaclab_eureka && \
+    DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e .
+
+# Add symbolic links
+RUN echo 'export OPENROUTER_API_KEY="${OPENROUTER_API_KEY}"' >> ${HOME}/.bashrc
+RUN echo "export LIVESTREAM=2" >> ${HOME}/.bashrc
+
 # Copy additional scripts
-COPY docker/sbtc/bash_scripts/runisaac.sh ./
+COPY IsaacLab/docker/sbtc/bash_scripts/runisaac.sh ./
+# Fix the missing typing_extensions
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/_isaac_sim/python.sh -m pip install typing_extensions
 
 # Setup environment and symbolic links
-RUN ln -s "/docs" ${ISAACLAB_PATH}/_docs && \
-    echo "export LIVESTREAM=2" >> ${HOME}/.bashrc
+RUN ln -s "/docs" ${ISAACLAB_PATH}/_docs
 
-# Install packages that do not install correctly during setup
-RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/_isaac_sim/python.sh -m pip install psutil && \
-    pip install torch-tb-profiler
-
-# Set up a symbolic link between the installed Isaac Lab Eureka root folder and _isaaclab_eureka in the Isaac Lab directory
-RUN ln -sf ${ISAACLAB_PATH}/../IsaacLabEureka ${ISAACLAB_PATH}/_isaaclab_eureka
+# Setup vscode
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -v
