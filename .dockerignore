@@ -4,9 +4,9 @@
 .gitignore
 # ignore docs
 docs/
-# ignore logs
-**/logs/
-**/runs/
+# ignore logs: actually, I need the logs
+# **/logs/
+# **/runs/
 **/output/*
 **/outputs/*
 **/videos/*
