@@ -136,6 +136,13 @@
             "--video", "--video_length", "500"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Eureka",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/_isaaclab_eureka/scripts/train.py",
+            "console": "integratedTerminal"
         }
     ]
 }
