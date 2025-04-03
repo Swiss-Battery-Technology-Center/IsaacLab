@@ -6,7 +6,7 @@
 docs/
 # ignore logs: actually, I need the logs
 # **/logs/
-# **/runs/
+**/runs/
 **/output/*
 **/outputs/*
 **/videos/*
