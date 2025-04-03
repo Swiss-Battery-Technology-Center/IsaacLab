@@ -226,6 +226,26 @@ services:
     stdin_open: true
     tty: true
 
+  isaac-lab-sbtc-conda:
+    profiles: ["sbtc-conda"]
+    env_file:
+      - .env.base
+      - .env.sbtc-conda
+    build:
+      context: ../../
+      dockerfile: IsaacLab/docker/Dockerfile.sbtc-conda
+      args:
+        - ISAACLAB_PATH_ARG=${DOCKER_ISAACLAB_PATH}
+    image: ${SBTC_IMAGE_NAME:-NONE}
+    container_name: isaac-lab-sbtc-conda
+    environment: *default-isaac-lab-environment
+    volumes: *default-isaac-lab-sbtc-volumes
+    network_mode: host
+    deploy: *default-isaac-lab-deploy
+    entrypoint: bash
+    stdin_open: true
+    tty: true
+
 volumes:
   # isaac-sim
   isaac-cache-kit:
