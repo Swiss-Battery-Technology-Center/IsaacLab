@@ -144,8 +144,8 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
     target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_tasks/isaaclab_tasks/sbtc/
     read_only: false
   - type: bind
-    source: ../.vscode
-    target: ${DOCKER_ISAACLAB_PATH}/.vscode
+    source: ../.vscode/tools
+    target: ${DOCKER_ISAACLAB_PATH}/.vscode/tools
   - type: bind
     source: ../../../usd/
     target: ${DOCKER_ISAACLAB_PATH}/usd
