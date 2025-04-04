@@ -23,7 +23,6 @@ WORKDIR ${ISAACLAB_PATH}/
 # Install Isaac Lab Eureka
 COPY IsaacLabEureka/ ${ISAACLAB_PATH}/../IsaacLabEureka/
 RUN ln -sf ${ISAACLAB_PATH}/../IsaacLabEureka ${ISAACLAB_PATH}/_isaaclab_eureka
-RUN ln -sf ${ISAACLAB_PATH}/_isaaclab_eureka/pyproject.toml ${ISAACLAB_PATH}/_isaaclab_eureka/source/isaaclab_eureka/pyproject.toml
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e ${ISAACLAB_PATH}/_isaaclab_eureka/source/isaaclab_eureka
 
 # Add symbolic links
