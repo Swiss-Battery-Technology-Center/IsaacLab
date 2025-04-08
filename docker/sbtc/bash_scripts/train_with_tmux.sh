@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# Ensure workspaceFolder is set, default to the current directory if not.
-: ${workspaceFolder:=$(pwd)}
-echo "workspaceFolder is set to: ${workspaceFolder}"
+# Ensure TMUX_SCRIPT_DIRECTORY is set, default to the current directory if not.
+: ${TMUX_SCRIPT_DIRECTORY:=$(pwd)}
+echo "TMUX_SCRIPT_DIRECTORY is set to: ${TMUX_SCRIPT_DIRECTORY}"
 
 # Configurable variables
 SESSION_NAME="isaaclab_training"
-# Note: workspaceFolder is assumed to be already set in the environment
-LOG_DIR="${workspaceFolder}/tmux"
+# Note: TMUX_SCRIPT_DIRECTORY is assumed to be already set in the environment
+LOG_DIR="${TMUX_SCRIPT_DIRECTORY}/tmux"
 LOG_FILE="${LOG_DIR}/${SESSION_NAME}.log"
-PYTHON_SCRIPT="${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py"
-ARGS=(--task SBTC-Unscrew-Franka-OSC-v0 --headless --livestream 0 --num_envs 1024)
-TRAIN_CMD="cd ${workspaceFolder} && ${workspaceFolder}/_isaac_sim/python.sh ${PYTHON_SCRIPT} ${ARGS[@]} | tee -a ${LOG_FILE}"
+PYTHON_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
+ARGS=(--task SBTC-Unscrew-Franka-OSC-v0 --headless --livestream 0)
+TRAIN_CMD="cd ${TMUX_SCRIPT_DIRECTORY} && ${TMUX_SCRIPT_DIRECTORY}/_isaac_sim/python.sh ${PYTHON_SCRIPT} ${ARGS[@]} | tee -a ${LOG_FILE}"
 
 # Ensure the log directory exists
 mkdir -p "${LOG_DIR}"
