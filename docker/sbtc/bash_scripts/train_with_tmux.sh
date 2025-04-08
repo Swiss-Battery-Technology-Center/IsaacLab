@@ -4,17 +4,58 @@
 : ${TMUX_SCRIPT_DIRECTORY:=$(pwd)}
 echo "TMUX_SCRIPT_DIRECTORY is set to: ${TMUX_SCRIPT_DIRECTORY}"
 
+# Default value for LIBRARY.
+LIBRARY="rls_rl"
+
+# Parse command-line arguments.
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --rsl_rl)
+            LIBRARY="rls_rl"
+            shift
+            ;;
+        --skrl)
+            LIBRARY="skrl"
+            shift
+            ;;
+        --eureka)
+            LIBRARY="eureka"
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+
+if [ "$LIBRARY" = "eureka" ]; then
+    PYTHON_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/_isaaclab_eureka/scripts/train.py"
+    ARGS=()
+elif [ "$LIBRARY" = "skrl" ]; then
+    PYTHON_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/skrl/train.py"
+    ARGS=(--task SBTC-Unscrew-Franka-OSC-v0 --headless --livestream 0)
+else
+    # Default case (no argument provided or argument is "rls_rl")
+    PYTHON_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
+    ARGS=(--task SBTC-Unscrew-Franka-OSC-v0 --headless --livestream 0)
+fi
+
+# Print the command that will be executed
+echo "Using Python script: $PYTHON_SCRIPT"
+echo "With arguments: ${ARGS[@]}"
+
 # Configurable variables
 SESSION_NAME="isaaclab_training"
 # Note: TMUX_SCRIPT_DIRECTORY is assumed to be already set in the environment
 LOG_DIR="${TMUX_SCRIPT_DIRECTORY}/tmux"
 LOG_FILE="${LOG_DIR}/${SESSION_NAME}.log"
-PYTHON_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
-ARGS=(--task SBTC-Unscrew-Franka-OSC-v0 --headless --livestream 0)
 TRAIN_CMD="cd ${TMUX_SCRIPT_DIRECTORY} && ${TMUX_SCRIPT_DIRECTORY}/_isaac_sim/python.sh ${PYTHON_SCRIPT} ${ARGS[@]} | tee -a ${LOG_FILE}"
 
 # Ensure the log directory exists
 mkdir -p "${LOG_DIR}"
+
+sleep 3  # Optional sleep to allow user to see the output before proceeding
 
 # --- CASE 1: Running inside a tmux session ---
 if [ -n "$TMUX" ]; then
