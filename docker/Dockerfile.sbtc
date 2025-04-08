@@ -34,3 +34,6 @@ COPY IsaacLab/docker/sbtc/bash_scripts/runisaac.sh ./
 
 # Setup vscode
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -v
+
+# Install tmux
+RUN apt-get install -y tmux

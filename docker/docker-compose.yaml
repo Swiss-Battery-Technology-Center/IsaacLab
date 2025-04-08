@@ -152,6 +152,9 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
   - type: bind
     source: ../../IsaacLabEureka/
     target: ${DOCKER_ISAACLAB_PATH}/../IsaacLabEureka
+  - type: bind
+    source: sbtc/bash_scripts/train_with_tmux.sh
+    target: ${DOCKER_ISAACLAB_PATH}/train_with_tmux.sh
 
 services:
   # This service is the base Isaac Lab image
