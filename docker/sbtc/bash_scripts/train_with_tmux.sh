@@ -10,7 +10,10 @@ echo "TMUX_SCRIPT_DIRECTORY is set to: ${TMUX_SCRIPT_DIRECTORY}"
 ###############################################
 # Default settings for library and workflow.
 ###############################################
-# The workflow: "isaaclab" (use library training script) or "eureka" (use eureka training script)
+# Valid workflow options:
+#   "isaaclab"  - use the library training script (for rsl_rl or skrl)
+#   "eureka"    - use the eureka training script
+#   "ray"       - use the ray tuner and run a separate ray_server session
 WORKFLOW="isaaclab"
 
 # The library (only rsl_rl and skrl are allowed; default is rsl_rl)
@@ -51,7 +54,11 @@ while [[ $# -gt 0 ]]; do
             WORKFLOW="eureka"
             shift
             ;;
-        # Future options (like --ray) can be added here.
+        --ray)
+            WORKFLOW="ray"
+            shift
+            ;;
+        # Future options can be added here.
         *)
             # Collect any other parameter into user_args.
             user_args+=("$1")
@@ -76,18 +83,31 @@ fi
 ###############################################
 # Workflow sanity check and TRAINING_SCRIPT assignment.
 ###############################################
-if [ "$WORKFLOW" = "eureka" ]; then
+if [ "$WORKFLOW" = "isaaclab" ]; then
+    TRAINING_SCRIPT="${LIBRARY_SCRIPT}"
+    final_args=("${default_args[@]}" "${user_args[@]}")
+    SESSION_NAME="isaaclab_training"
+elif [ "$WORKFLOW" = "eureka" ]; then
     TRAINING_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/_isaaclab_eureka/scripts/train.py"
     # For eureka, do not prepend default arguments.
     final_args=("${user_args[@]}")
-elif [ "$WORKFLOW" = "isaaclab" ]; then
-    TRAINING_SCRIPT="${LIBRARY_SCRIPT}"
-    final_args=("${default_args[@]}" "${user_args[@]}")
+    SESSION_NAME="eureka_training"
+elif [ "$WORKFLOW" = "ray" ]; then
+    TRAINING_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/tuner.py"
+    # Define default arguments for ray tuner.
+    ray_default_args=(--cfg_file "scripts/reinforcement_learning/ray/hyperparameter_tuning/vision_cartpole_cfg.py" \
+                      --cfg_class "CartpoleTheiaJobCfg" \
+                      --run_mode "local" \
+                      --workflow "${LIBRARY_SCRIPT}" \
+                      --num_workers_per_node 1)
+    final_args=("${ray_default_args[@]}" "${user_args[@]}")
+    SESSION_NAME="ray_training"
 else
     echo "WARNING: Workflow '$WORKFLOW' is not recognized. Defaulting to 'isaaclab'."
     WORKFLOW="isaaclab"
     TRAINING_SCRIPT="${LIBRARY_SCRIPT}"
     final_args=("${default_args[@]}" "${user_args[@]}")
+    SESSION_NAME="isaaclab_training"
 fi
 
 ###############################################
@@ -97,15 +117,12 @@ echo "Selected library: ${LIBRARY}"
 echo "Using workflow: ${WORKFLOW}"
 echo "Using training script: ${TRAINING_SCRIPT}"
 echo "With arguments: ${final_args[@]}"
+sleep 3  # Optional: allow the user to see the output before proceeding.
+
 
 ###############################################
 # TMUX session and logging configuration.
 ###############################################
-if [ "$WORKFLOW" = "eureka" ]; then
-    SESSION_NAME="eureka_training"
-else
-    SESSION_NAME="isaaclab_training"
-fi
 
 LOG_DIR="${TMUX_SCRIPT_DIRECTORY}/tmux"
 TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
@@ -116,30 +133,41 @@ mkdir -p "${LOG_DIR}/${WORKFLOW}"
 
 TRAIN_CMD="cd ${TMUX_SCRIPT_DIRECTORY} && ${TMUX_SCRIPT_DIRECTORY}/_isaac_sim/python.sh ${TRAINING_SCRIPT} ${final_args[@]} | tee -a ${LOG_FILE}"
 
-sleep 3  # Optional sleep to let the user see the output before proceeding.
 
 ###############################################
-# --- CASE 1: Running inside a tmux session ---
+# Ensure we are running outside any tmux session.
 ###############################################
+
 if [ -n "$TMUX" ]; then
-    current_session=$(tmux display-message -p '#S')
-    if [ "$current_session" != "${SESSION_NAME}" ]; then
-        echo "You are inside tmux session '$current_session', not the target '$SESSION_NAME'."
-        echo "Detaching from the current session and re-running the script without TMUX..."
-        tmux detach-client
-        # Re-run the script with TMUX unset so that subsequent logic treats us as outside tmux.
-        exec env -u TMUX "$0" "$@"
-    else
-        echo "Already inside the target tmux session '$SESSION_NAME'."
-        echo "Running training command in the current pane..."
-        eval "$TRAIN_CMD"
-        exit 0
-    fi
+    echo "Detected tmux session. Detaching from current tmux and re-running script outside tmux..."
+    tmux detach-client
+    exec env -u TMUX "$0" "$@"
 fi
 
 ###############################################
-# --- CASE 2 & 3: Running outside any tmux session ---
+# If workflow is ray, handle the ray_server session first.
 ###############################################
+if [ "$WORKFLOW" = "ray" ]; then
+    RAY_SERVER_SESSION="ray_server"
+    RAY_SERVER_CMD='echo "import ray; ray.init(); import time; [time.sleep(10) for _ in iter(int, 1)]" | ./isaaclab.sh -p'
+    if ! tmux has-session -t "${RAY_SERVER_SESSION}" 2>/dev/null; then
+        echo "Creating new tmux session '${RAY_SERVER_SESSION}' for Ray server..."
+        tmux new-session -d -s "${RAY_SERVER_SESSION}" -n ray_server "${RAY_SERVER_CMD}; bash"
+    else
+        echo "Ray server session '${RAY_SERVER_SESSION}' already exists. Sending command..."
+        tmux send-keys -t "${RAY_SERVER_SESSION}:ray_server" "$RAY_SERVER_CMD" C-m
+    fi
+    echo "Ray server session '${RAY_SERVER_SESSION}' is being started in 20 seconds..."
+    sleep 20
+    echo "Ray server session '${RAY_SERVER_SESSION}' is ready."
+    sleep 1
+fi
+
+###############################################
+# --- TMUX Session Handling for isaaclab/eureka/ray_training ---
+###############################################
+
+# If not in a tmux session, create or send the command to the target session.
 if ! tmux has-session -t "${SESSION_NAME}" 2>/dev/null; then
     echo "Target tmux session '$SESSION_NAME' does not exist. Creating new session..."
     tmux new-session -d -s "${SESSION_NAME}" -n training "${TRAIN_CMD}; bash"

@@ -25,6 +25,16 @@ COPY IsaacLabEureka/ ${ISAACLAB_PATH}/../IsaacLabEureka/
 RUN ln -sf ${ISAACLAB_PATH}/../IsaacLabEureka ${ISAACLAB_PATH}/_isaaclab_eureka
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e ${ISAACLAB_PATH}/_isaaclab_eureka/source/isaaclab_eureka
 
+# Install Ray
+RUN DEBIAN_FRONTEND=noninteractive apt-get install wget
+ENV PATH="/usr/local/nvidia/bin:$PATH"
+ENV LD_LIBRARY_PATH="/usr/local/nvidia/lib64"
+RUN ln -sf /usr/local/nvidia/bin/nvidia* /usr/bin
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install "ray[default, tune]"==2.31.0 && \
+    sed -i "1i #!${ISAACLAB_PATH}/_isaac_sim/python.sh" ${ISAACLAB_PATH}/_isaac_sim/kit/python/bin/ray && \
+    ln -s ${ISAACLAB_PATH}/_isaac_sim/kit/python/bin/ray /usr/local/bin/ray
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install optuna bayesian-optimization mlflow
+
 # Add symbolic links
 RUN echo 'source ${ISAACLAB_PATH}/_isaaclab_eureka/api_keys/api_key_importer.sh' >> ${HOME}/.bashrc
 RUN echo "export LIVESTREAM=2" >> ${HOME}/.bashrc
