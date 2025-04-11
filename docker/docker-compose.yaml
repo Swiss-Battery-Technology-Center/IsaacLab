@@ -140,8 +140,12 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
     target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_assets/isaaclab_assets/robots/universal_robots.py
     read_only: false
   - type: bind
-    source: ../../sbtc-gym/src/sbtc/
-    target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_tasks/isaaclab_tasks/sbtc/
+    source: ../../sbtc-gym/src/sbtc_tasks/
+    target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_tasks/isaaclab_tasks/sbtc_tasks/
+    read_only: false
+  - type: bind
+    source: ../../sbtc-gym/src/sbtc_ray/
+    target: ${DOCKER_ISAACLAB_PATH}/scripts/reinforcement_learning/ray/sbtc_ray/
     read_only: false
   - type: bind
     source: ../.vscode/tools
