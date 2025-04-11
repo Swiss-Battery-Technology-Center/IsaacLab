@@ -37,7 +37,8 @@ RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip instal
 
 # Add symbolic links
 RUN echo 'source ${ISAACLAB_PATH}/_isaaclab_eureka/api_keys/api_key_importer.sh' >> ${HOME}/.bashrc
-RUN echo "export LIVESTREAM=2" >> ${HOME}/.bashrc
+RUN echo "export LIVESTREAM=0" >> ${HOME}/.bashrc
+RUN echo "export HEADLESS=1" >> ${HOME}/.bashrc
 
 # Copy additional scripts
 COPY IsaacLab/docker/sbtc/bash_scripts/runisaac.sh ./
