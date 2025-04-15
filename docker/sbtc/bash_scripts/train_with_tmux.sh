@@ -95,12 +95,16 @@ elif [ "$WORKFLOW" = "eureka" ]; then
 elif [ "$WORKFLOW" = "ray" ]; then
     TRAINING_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/tuner.py"
     # Define default arguments for ray tuner.
-    ray_default_args=(--cfg_file "${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/sbtc_ray/unscrew_cartpole_cfg.py" \
+    ray_default_args=(--cfg_file "${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/sbtc_ray/unscrew_franka_cfg.py" \
                       --cfg_class "UnscrewFrankaJobCfg" \
                       --run_mode "local" \
-                      # --workflow "${LIBRARY_SCRIPT}" \
-                      --workflow "${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rl_games/train.py" \
-                      --num_workers_per_node 1)
+                      --workflow "${LIBRARY_SCRIPT}" \
+                      --num_workers_per_node 1 \
+                      --repeat_run_count 1 \
+                      --num_samples 24 \
+                      --metric "Episode_Reward/screw_engaged" \
+                      --mode "max"
+                      )
     final_args=("${ray_default_args[@]}" "${user_args[@]}")
     SESSION_NAME="ray_training"
 else
