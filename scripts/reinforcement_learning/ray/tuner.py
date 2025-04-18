@@ -13,6 +13,7 @@ import util
 from ray import air, tune
 from ray.tune.search.optuna import OptunaSearch
 from ray.tune.search.repeater import Repeater
+import time
 
 """
 This script breaks down an aggregate tuning job, as defined by a hyperparameter sweep configuration,
@@ -70,6 +71,7 @@ class IsaacLabTuneTrainable(tune.Trainable):
     def setup(self, config: dict) -> None:
         """Get the invocation command, return quick for easy scheduling."""
         self.data = None
+        self.data_freeze_duration = 0.0
         self.invoke_cmd = util.get_invocation_command_from_cfg(cfg=config, python_cmd=PYTHON_EXEC, workflow=WORKFLOW)
         print(f"[INFO]: Recovered invocation with {self.invoke_cmd}")
         self.experiment = None
@@ -110,10 +112,32 @@ class IsaacLabTuneTrainable(tune.Trainable):
             while data is None:
                 data = util.load_tensorboard_logs(self.tensorboard_logdir)
                 sleep(2)  # Lazy report metrics to avoid performance overhead
+                proc_status = self.proc.poll()
+                if proc_status is not None:
+                    break
 
             if self.data is not None:
-                while util._dicts_equal(data, self.data):
+                data_ = {k: v for k, v in data.items() if k != "done"}
+                self_data_ = {k: v for k, v in self.data.items() if k != "done"}
+                time_start = time.time()
+                while util._dicts_equal(data_, self_data_):
+                    self.data_freeze_duration = time.time() - time_start
                     data = util.load_tensorboard_logs(self.tensorboard_logdir)
+                    data_ = {k: v for k, v in data.items() if k != "done"}
+                    proc_status = self.proc.poll()
+                    if proc_status is not None:
+                        break
+                    if self.data_freeze_duration > 180.0:
+                        self.data_freeze_duration = 0.0
+                        self.proc.terminate()
+                        try:
+                            retcode = self.proc.wait(timeout=20)
+                            print("[INFO]: Process return code after terminate():", retcode)
+                        except Exception as e:
+                            raise RuntimeError(f"The frozen process did not terminate within timeout duration: {e}")
+                        self.data = data
+                        self.data["done"] = True
+                        return self.data
                     sleep(2)  # Lazy report metrics to avoid performance overhead
 
             self.data = data
