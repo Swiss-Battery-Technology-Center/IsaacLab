@@ -73,13 +73,16 @@ done
 if [ "$LIBRARY" = "rsl_rl" ]; then
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
     RAY_CFG_CLASS="UnscrewFrankaRslRlJobCfg"
+    RAY_METRIC="Episode_Reward/screw_engaged"
 elif [ "$LIBRARY" = "skrl" ]; then
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/skrl/train.py"
     RAY_CFG_CLASS="UnscrewFrankaSkrlJobCfg"
+    RAY_METRIC="Info_/_Episode_Reward/screw_engaged"
 else
     echo "WARNING: Library '$LIBRARY' is not recognized. Defaulting to 'rsl_rl'."
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
     RAY_CFG_CLASS="UnscrewFrankaRslRlJobCfg"
+    RAY_METRIC="Episode_Reward/screw_engaged"
     LIBRARY="rsl_rl"
 fi
 
@@ -105,7 +108,7 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --num_workers_per_node 1 \
                       --repeat_run_count 1 \
                       --num_samples 24 \
-                      --metric "Episode_Reward/screw_engaged" \
+                      --metric "${RAY_METRIC}" \
                       --mode "max"
                       )
     final_args=("${ray_default_args[@]}" "${user_args[@]}")
@@ -140,7 +143,6 @@ LOG_FILE="${LOG_DIR}/${WORKFLOW}/${TIMESTAMP}_${LIBRARY}.log"
 mkdir -p "${LOG_DIR}/${WORKFLOW}"
 
 TRAIN_CMD="cd ${TMUX_SCRIPT_DIRECTORY} && ${TMUX_SCRIPT_DIRECTORY}/_isaac_sim/python.sh ${TRAINING_SCRIPT} ${final_args[@]} | tee -a ${LOG_FILE}"
-
 
 ###############################################
 # Ensure we are running outside any tmux session.
