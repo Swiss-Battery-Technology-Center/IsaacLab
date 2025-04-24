@@ -109,7 +109,8 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --repeat_run_count 1 \
                       --num_samples 24 \
                       --metric "${RAY_METRIC}" \
-                      --mode "max"
+                      --mode "max" \
+                      --data-freeze-threshold 120.0 \
                       )
     final_args=("${ray_default_args[@]}" "${user_args[@]}")
     SESSION_NAME="ray_training"
