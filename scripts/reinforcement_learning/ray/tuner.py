@@ -58,7 +58,8 @@ BASE_DIR = os.path.expanduser("~")
 PYTHON_EXEC = "./isaaclab.sh -p"
 WORKFLOW = "scripts/reinforcement_learning/rl_games/train.py"
 NUM_WORKERS_PER_NODE = 1  # needed for local parallelism
-DATA_FREEZE_DURATION_THRESHOLD = 180.0  # seconds to wait with no new tensorboard scalars before killing the process
+PROCESS_RESPONSE_TIMEOUT = 200.0  # seconds to wait before killing the process when it stops responding
+MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS = 1000  # maximum number of lines to read from the training process logs
 
 
 class IsaacLabTuneTrainable(tune.Trainable):
@@ -72,7 +73,7 @@ class IsaacLabTuneTrainable(tune.Trainable):
     def setup(self, config: dict) -> None:
         """Get the invocation command, return quick for easy scheduling."""
         self.data = None
-        self.data_freeze_duration = 0.0
+        self.time_since_last_proc_response = 0.0
         self.invoke_cmd = util.get_invocation_command_from_cfg(cfg=config, python_cmd=PYTHON_EXEC, workflow=WORKFLOW)
         print(f"[INFO]: Recovered invocation with {self.invoke_cmd}")
         self.experiment = None
@@ -87,12 +88,22 @@ class IsaacLabTuneTrainable(tune.Trainable):
             # When including this as first step instead of setup, experiments get scheduled faster
             # Don't want to block the scheduler while the experiment spins up
             print(f"[INFO]: Invoking experiment as first step with {self.invoke_cmd}...")
-            experiment = util.execute_job(
-                self.invoke_cmd,
-                identifier_string="",
-                extract_experiment=True,
-                persistent_dir=BASE_DIR,
-            )
+            try:
+                experiment = util.execute_job(
+                    self.invoke_cmd,
+                    identifier_string="",
+                    extract_experiment=True,  # Keep this as True to return a valid dictionary
+                    persistent_dir=BASE_DIR,
+                    max_lines_to_search_logs=MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS,
+                    max_time_to_search_logs=PROCESS_RESPONSE_TIMEOUT,
+                )
+            except util.LogExtractionError:
+                print("[FATAL]: LogExtractionError: aborting entire tuning run...")
+                self.data = {}
+                self.data["LOG_EXTRACTION_ERROR_STOPPER_FLAG"] = True
+                self.data["done"] = True
+                return self.data
+
             self.experiment = experiment
             print(f"[INFO]: Tuner recovered experiment info {experiment}")
             self.proc = experiment["proc"]
@@ -122,23 +133,20 @@ class IsaacLabTuneTrainable(tune.Trainable):
                 self_data_ = {k: v for k, v in self.data.items() if k != "done"}
                 time_start = time()
                 while util._dicts_equal(data_, self_data_):
-                    self.data_freeze_duration = time() - time_start
+                    self.time_since_last_proc_response = time() - time_start
                     data = util.load_tensorboard_logs(self.tensorboard_logdir)
                     data_ = {k: v for k, v in data.items() if k != "done"}
                     proc_status = self.proc.poll()
                     if proc_status is not None:
                         break
-                    if self.data_freeze_duration > DATA_FREEZE_DURATION_THRESHOLD:
-                        self.data_freeze_duration = 0.0
-                        print("[INFO]: Training workflow process frozen, terminating...")
+                    if self.time_since_last_proc_response > PROCESS_RESPONSE_TIMEOUT:
+                        self.time_since_last_proc_response = 0.0
+                        print("[WARNING]: Training workflow process is not responding, terminating...")
                         self.proc.terminate()
                         try:
                             self.proc.wait(timeout=20)
                         except subprocess.TimeoutExpired:
-                            print(
-                                "[ERROR]: The frozen training workflow process did not terminate within timeout"
-                                " duration"
-                            )
+                            print("[ERROR]: The process did not terminate within timeout duration.")
                             self.proc.kill()
                             self.proc.wait()
                         self.data = data
@@ -148,6 +156,7 @@ class IsaacLabTuneTrainable(tune.Trainable):
 
             self.data = data
             self.data["done"] = False
+
         return self.data
 
     def default_resource_request(self):
@@ -160,6 +169,22 @@ class IsaacLabTuneTrainable(tune.Trainable):
             [{"CPU": resources["CPU"] / NUM_WORKERS_PER_NODE, "GPU": resources["GPU"] / NUM_WORKERS_PER_NODE}],
             strategy="STRICT_PACK",
         )
+
+
+class LogExtractionErrorStopper(tune.Stopper):
+    """Stopper that stops all trials if a log extraction error occurs."""
+
+    def __init__(self):
+        self.stop_now = False
+
+    def __call__(self, trial_id, result):
+        if result.get("LOG_EXTRACTION_ERROR_STOPPER_FLAG", False):
+            self.stop_now = True
+        return False
+
+    def stop_all(self):
+        # Stop all trials if the flag was set
+        return self.stop_now
 
 
 def invoke_tuning_run(cfg: dict, args: argparse.Namespace) -> None:
@@ -205,6 +230,7 @@ def invoke_tuning_run(cfg: dict, args: argparse.Namespace) -> None:
                 checkpoint_frequency=0,  # Disable periodic checkpointing
                 checkpoint_at_end=False,  # Disable final checkpoint
             ),
+            stop=LogExtractionErrorStopper(),
         )
 
     elif args.run_mode == "remote":  # MLFlow, to MLFlow server
@@ -220,6 +246,7 @@ def invoke_tuning_run(cfg: dict, args: argparse.Namespace) -> None:
             storage_path="/tmp/ray",
             callbacks=[mlflow_callback],
             checkpoint_config=ray.train.CheckpointConfig(checkpoint_frequency=0, checkpoint_at_end=False),
+            stop=LogExtractionErrorStopper(),
         )
     else:
         raise ValueError("Unrecognized run mode.")
@@ -238,7 +265,6 @@ def invoke_tuning_run(cfg: dict, args: argparse.Namespace) -> None:
         run_config=run_config,
     )
 
-    # Execute the tuning
     tuner.fit()
 
     # Save results to mounted volume
@@ -339,17 +365,26 @@ if __name__ == "__main__":
         help="How many times to repeat each hyperparameter config.",
     )
     parser.add_argument(
-        "--data-freeze-threshold",
+        "--process_response_timeout",
         type=float,
-        default=DATA_FREEZE_DURATION_THRESHOLD,
-        help="Seconds to wait with no new tensorboard scalars before terminating the training workflow process",
+        default=PROCESS_RESPONSE_TIMEOUT,
+        help="Training workflow process response timeout",
+    )
+    parser.add_argument(
+        "--max_lines_to_search_experiment_logs",
+        type=float,
+        default=MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS,
+        help="Max number of lines to search for experiment logs before terminating the training workflow process",
     )
 
     args = parser.parse_args()
-    DATA_FREEZE_DURATION_THRESHOLD = args.data_freeze_threshold
+    PROCESS_RESPONSE_TIMEOUT = args.process_response_timeout
+    MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS = int(args.max_lines_to_search_experiment_logs)
     print(
-        "[INFO]: The time to wait with no new tensorboard scalars before (early) terminating the training "
-        f"workflow process is set to {DATA_FREEZE_DURATION_THRESHOLD} seconds."
+        "[INFO]: The max number of lines to search for experiment logs before (early) terminating the training "
+        f"workflow process is set to {MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS}.\n"
+        f"[INFO]: The process response timeout, used while updating tensorboard scalars and searching for "
+        f"experiment logs, is set to {PROCESS_RESPONSE_TIMEOUT} seconds."
     )
     NUM_WORKERS_PER_NODE = args.num_workers_per_node
     print(f"[INFO]: Using {NUM_WORKERS_PER_NODE} workers per node.")
