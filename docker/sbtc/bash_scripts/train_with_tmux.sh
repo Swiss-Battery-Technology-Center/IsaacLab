@@ -110,8 +110,8 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --num_samples 24 \
                       --metric "${RAY_METRIC}" \
                       --mode "max" \
-                      --process_freeze_threshold 120.0 \
-                      --max_lines_to_search_experiment_logs 10000 \
+                      --process_response_timeout 120.0 \
+                      --max_lines_to_search_experiment_logs 1000 \
                       )
     final_args=("${ray_default_args[@]}" "${user_args[@]}")
     SESSION_NAME="ray_training"
