@@ -123,17 +123,17 @@ class IsaacLabTuneTrainable(tune.Trainable):
 
             while data is None:
                 data = util.load_tensorboard_logs(self.tensorboard_logdir)
-                sleep(2)  # Lazy report metrics to avoid performance overhead
                 proc_status = self.proc.poll()
                 if proc_status is not None:
                     break
+                sleep(2)  # Lazy report metrics to avoid performance overhead
 
             if self.data is not None:
                 data_ = {k: v for k, v in data.items() if k != "done"}
                 self_data_ = {k: v for k, v in self.data.items() if k != "done"}
-                time_start = time()
+                unresponsiveness_start_time = time()
                 while util._dicts_equal(data_, self_data_):
-                    self.time_since_last_proc_response = time() - time_start
+                    self.time_since_last_proc_response = time() - unresponsiveness_start_time
                     data = util.load_tensorboard_logs(self.tensorboard_logdir)
                     data_ = {k: v for k, v in data.items() if k != "done"}
                     proc_status = self.proc.poll()
@@ -265,6 +265,7 @@ def invoke_tuning_run(cfg: dict, args: argparse.Namespace) -> None:
         run_config=run_config,
     )
 
+    # Execute the tuning
     tuner.fit()
 
     # Save results to mounted volume
