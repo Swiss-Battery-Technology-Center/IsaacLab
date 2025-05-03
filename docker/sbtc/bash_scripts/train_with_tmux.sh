@@ -112,6 +112,7 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --mode "max" \
                       --process_response_timeout 120.0 \
                       --max_lines_to_search_experiment_logs 1000 \
+                      --max_log_extraction_errors 2 \
                       )
     final_args=("${ray_default_args[@]}" "${user_args[@]}")
     SESSION_NAME="ray_training"
