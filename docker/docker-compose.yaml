@@ -163,7 +163,7 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
     source: ../scripts
     target: ${DOCKER_ISAACLAB_PATH}/scripts
   - type: volume
-    source: isaac-lab-tmux
+    source: tmux
     target: ${DOCKER_ISAACLAB_PATH}/tmux
 
 services:
@@ -278,3 +278,4 @@ volumes:
   isaac-cache-miniconda:
   isaac-config:
   vscode-server:
+  tmux:
