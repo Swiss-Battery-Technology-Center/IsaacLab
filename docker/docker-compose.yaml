@@ -162,6 +162,9 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
   - type: bind
     source: ../scripts
     target: ${DOCKER_ISAACLAB_PATH}/scripts
+  - type: volume
+    source: isaac-lab-tmux
+    target: ${DOCKER_ISAACLAB_PATH}/tmux
 
 services:
   # This service is the base Isaac Lab image
