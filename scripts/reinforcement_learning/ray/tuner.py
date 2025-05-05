@@ -104,7 +104,6 @@ class IsaacLabTuneTrainable(tune.Trainable):
                     "done": True,
                 }
                 return self.data
-
             self.experiment = experiment
             print(f"[INFO]: Tuner recovered experiment info {experiment}")
             self.proc = experiment["proc"]
@@ -173,7 +172,7 @@ class IsaacLabTuneTrainable(tune.Trainable):
 
 
 class LogExtractionErrorStopper(tune.Stopper):
-    """Stopper that stops all trials if a log extraction error occurs."""
+    """Stopper that stops all trials if many log extraction error occurs."""
 
     def __init__(self, max_errors: int):
         self.max_errors = max_errors
@@ -399,7 +398,7 @@ if __name__ == "__main__":
     print(
         "[INFO]: The max number of lines to search for experiment logs before (early) terminating the training "
         f"workflow process is set to {MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS}.\n"
-        f"[INFO]: The process response timeout, used while updating tensorboard scalars and searching for "
+        "[INFO]: The process response timeout, used while updating tensorboard scalars and searching for "
         f"experiment logs, is set to {PROCESS_RESPONSE_TIMEOUT} seconds."
     )
     MAX_LOG_EXTRACTION_ERRORS = int(args.max_log_extraction_errors)
