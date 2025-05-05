@@ -225,13 +225,24 @@ def execute_job(
                 if log_all_output:
                     print(f"{identifier_string}: {line}")
 
-        # Read stdout until we find experiment info
+        # Read stdout until we find exp. info, up to max_lines_to_search_logs lines, max_time_to_search_logs, or EOF.
         # Do some careful handling prevent overflowing the pipe reading buffer with error 141
-        for line in iter(process.stdout.readline, ""):
-            line = line.strip()
-            result_details.append(f"{identifier_string}: {line} \n")
-            if log_all_output:
-                print(f"{identifier_string}: {line}")
+        lines_read = 0
+        search_duration = 0.0
+        search_start_time = time()
+        while True:
+            new_line_ready, _, _ = select.select([process_file_descriptor], [], [], 1.0)  # Wait up to 1s for stdout
+            if new_line_ready:
+                line = process.stdout.readline()
+                if not line:  # EOF
+                    break
+
+                lines_read += 1
+                line = line.strip()
+                result_details.append(f"{identifier_string}: {line} \n")
+
+                if log_all_output:
+                    print(f"{identifier_string}: {line}")
 
                 if extract_experiment:
                     exp_match = experiment_info_pattern.search(line)

@@ -156,7 +156,6 @@ class IsaacLabTuneTrainable(tune.Trainable):
 
             self.data = data
             self.data["done"] = False
-
         return self.data
 
     def default_resource_request(self):
