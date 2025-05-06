@@ -1,5 +1,51 @@
 #!/bin/bash
 
+
+#################### HELPER FUNCTIONS ###########################
+# Function: merge_default_args
+#   Takes three arguments:
+#     1) name of the defaults array (flat: flag value flag value …)
+#     2) name of the user_args array (same format)
+#     3) name of the output array
+# Produces an array containing only the default flags,
+# but with values overridden by any matching user_args.
+# Usage:
+#   merge_default_args default_args user_args final_args
+merge_default_args() {
+  local def_name="$1" user_name="$2" out_name="$3"
+  # namerefs into the arrays whose names were passed in
+  local -n defs="$def_name"
+  local -n users="$user_name"
+  local -n out="$out_name"
+
+  # Build an ordered list of the default flags + a map of default → value
+  declare -a keys=()
+  declare -A map=()
+  for ((i=0; i<${#defs[@]}; i+=2)); do
+    key="${defs[i]}"
+    val="${defs[i+1]}"
+    keys+=( "$key" )
+    map["$key"]="$val"
+  done
+
+  # Override defaults with any user-supplied values
+  for ((i=0; i<${#users[@]}; i+=2)); do
+    key="${users[i]}"
+    val="${users[i+1]}"
+    if [[ -n "${map[$key]+_}" ]]; then
+      map["$key"]="$val"
+    fi
+  done
+
+  # Flatten back into the out array, preserving original order
+  out=()
+  for key in "${keys[@]}"; do
+    out+=( "$key" "${map[$key]}" )
+  done
+}
+#################################################################
+
+
 echo ""
 echo "Training is being started in a tmux session..."
 
@@ -114,7 +160,7 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --max_lines_to_search_experiment_logs 1000 \
                       --max_log_extraction_errors 2 \
                       )
-    final_args=("${ray_default_args[@]}" "${user_args[@]}")
+    merge_default_args ray_default_args user_args final_args  #  merge defaults with any overrides in user_args
     SESSION_NAME="ray_training"
 else
     echo "WARNING: Workflow '$WORKFLOW' is not recognized. Defaulting to 'isaaclab'."
