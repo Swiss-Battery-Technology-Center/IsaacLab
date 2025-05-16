@@ -111,9 +111,9 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
   - type: volume
     source: isaac-lab-docs
     target: ${DOCKER_ISAACLAB_PATH}/docs/_build
-  - type: volume
-    source: isaac-lab-logs
-    target: ${DOCKER_ISAACLAB_PATH}/logs
+  # - type: volume
+  #   source: isaac-lab-logs
+  #   target: ${DOCKER_ISAACLAB_PATH}/logs
   - type: volume
     source: isaac-lab-data
     target: ${DOCKER_ISAACLAB_PATH}/data_storage
@@ -162,9 +162,21 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
   - type: bind
     source: ../scripts
     target: ${DOCKER_ISAACLAB_PATH}/scripts
-  - type: volume
-    source: tmux
+  - type: bind
+    source: ../../../logs/isaaclab/
+    target: ${DOCKER_ISAACLAB_PATH}/logs
+  - type: bind
+    source: ../../../logs/eureka/
+    target: ${DOCKER_ISAACLAB_PATH}/../IsaacLabEureka/logs
+  - type: bind
+    source: ../../../logs/ray/
+    target: /tmp/ray
+  - type: bind
+    source: ../../../logs/tmux/
     target: ${DOCKER_ISAACLAB_PATH}/tmux
+  - type: bind
+    source: ../../../logs/
+    target: ${DOCKER_ISAACLAB_PATH}/_logs_all
 
 services:
   # This service is the base Isaac Lab image
