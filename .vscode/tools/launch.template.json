@@ -12,6 +12,40 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Python: Play-rsl_rl sbtc-unscrew-franka-OSC-RNN",
+            "type": "debugpy",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-RNN-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Play-rsl_rl sbtc-unscrew-franka-OSC",
+            "type": "debugpy",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Train-rsl_rl sbtc-unscrew-franka-OSC-RNN",
+            "type": "debugpy",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-RNN-v0", "--headless", "--livestream", "0", "--num_envs", "1024",
+                      "--video", "--video_length", "500", "--video_interval", "2400"],
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Train-rsl_rl sbtc-unscrew-franka-OSC",
+            "type": "debugpy",
+            "request": "launch",
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "1024",
+                      "--video", "--video_length", "500", "--video_interval", "2400"],
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Train-skrl sbtc-unscrew-franka-OSC",
             "type": "debugpy",
             "request": "launch",
@@ -35,23 +69,6 @@
             "request": "launch",
             "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/skrl/play.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Python: Train-rsl_rl sbtc-unscrew-franka-OSC",
-            "type": "debugpy",
-            "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-v0", "--headless", "--livestream", "0", "--num_envs", "1024",
-                      "--video", "--video_length", "500", "--video_interval", "2400"],
-            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Python: Play-rsl_rl sbtc-unscrew-franka-OSC",
-            "type": "debugpy",
-            "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
-            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
         {
@@ -91,7 +108,7 @@
             "type": "debugpy",
             "request": "launch",
             "args" : ["--task", "SBTC-Reach-Franka-OSC-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
-            "program": "${workspaceFolder}/source/standalone/environments/random_agent.py",
+            "program": "${workspaceFolder}/scripts/environments/random_agent.py",
             "console": "integratedTerminal"
         },
         {
@@ -99,7 +116,7 @@
             "type": "debugpy",
             "request": "launch",
             "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
-            "program": "${workspaceFolder}/source/standalone/environments/random_agent.py",
+            "program": "${workspaceFolder}/scripts/environments/random_agent.py",
             "console": "integratedTerminal"
         },
         {
@@ -107,7 +124,7 @@
             "type": "debugpy",
             "request": "launch",
             "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
-            "program": "${workspaceFolder}/source/standalone/environments/random_agent.py",
+            "program": "${workspaceFolder}/scripts/environments/random_agent.py",
             "console": "integratedTerminal"
         },
         {
