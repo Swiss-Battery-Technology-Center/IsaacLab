@@ -28,6 +28,7 @@ parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy 
 parser.add_argument(
     "--distributed", action="store_true", default=False, help="Run training with multiple GPUs or nodes."
 )
+parser.add_argument("--curriculum_multiplier", type=float, default=1.0, help="Curriculum multiplier for training.")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -106,7 +107,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # override configurations with non-hydra CLI arguments
     agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
     if hasattr(env_cfg, "update_curriculum_timing"):
-        env_cfg.update_curriculum_timing(agent_cfg.num_steps_per_env)  # type: ignore
+        env_cfg.update_curriculum_timing(agent_cfg.num_steps_per_env, args_cli.curriculum_multiplier)  # type: ignore
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
     agent_cfg.max_iterations = (
         args_cli.max_iterations if args_cli.max_iterations is not None else agent_cfg.max_iterations
