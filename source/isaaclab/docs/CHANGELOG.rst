@@ -22,7 +22,7 @@ Changed
   passed in the ``TerrainGeneratorCfg``.
 
 
-0.40.3 (2025-03-20)
+0.40.3 (2025-03-20) - reverted this
 ~~~~~~~~~~~~~~~~~~~
 
 Changed
