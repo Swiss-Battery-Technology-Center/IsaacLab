@@ -844,13 +844,13 @@ class OperationalSpaceControllerAction(ActionTerm):
 
     def _clamp_angleaxis(self, v: torch.Tensor, max_angle: float | torch.Tensor) -> torch.Tensor:
         """
-        Clamps the angle-axis rotation vector to a maximum angle.
+        Returns the angle-clamped version of an angle-axis rotation vector.
 
         Args:
-            v: The angle-axis rotation vector of shape (*, 3), where * can be any number of dimensions.
-            max_angle: The maximum angle in radians to clamp the vector to.
+            v: The angle-axis rotation vector, tensor of shape (``self.num_envs``, 3).
+            max_angle: The angle to clamp the vector norm to, tensor of shape (``self.num_envs``, 1) or a scalar.
         Returns:
-            A tensor of the same shape as `v`, where each vector is scaled to have a maximum angle of `max_angle`.
+            Clamped angle axis vector, tensor of shape (``self.num_envs``, 3).
         """
         angle = torch.linalg.norm(v, dim=-1, keepdim=True)
         max_angle = torch.as_tensor(max_angle, dtype=v.dtype, device=v.device)
