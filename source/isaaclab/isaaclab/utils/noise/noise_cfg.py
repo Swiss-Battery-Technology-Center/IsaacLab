@@ -78,6 +78,17 @@ class NoiseModelCfg:
     noise_cfg: NoiseCfg = MISSING
     """The noise configuration to use."""
 
+    func: Callable[[torch.Tensor], torch.Tensor] | None = None
+    """Optional function or callable class used by this noise model.
+
+    The function must take a single `torch.Tensor` (the batch of observations) as input
+    and return a `torch.Tensor` of the same shape with noise applied.
+
+    It also supports `callable classes <https://docs.python.org/3/reference/datamodel.html#object.__call__>`_,
+    i.e. classes that implement the ``__call__()`` method. In this case, the class should inherit from the
+    :class:`ModifierBase` class and implement the required methods.
+    """
+
 
 @configclass
 class NoiseModelWithAdditiveBiasCfg(NoiseModelCfg):
