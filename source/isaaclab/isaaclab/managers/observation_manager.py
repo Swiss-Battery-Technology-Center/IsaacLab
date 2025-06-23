@@ -541,12 +541,6 @@ class ObservationManager(ManagerBase):
                     term_cfg.noise.func = noise_model_cls(
                         term_cfg.noise, num_envs=self._env.num_envs, device=self._env.device
                     )
-                    # check if function is callable
-                    if not callable(term_cfg.noise.func):
-                        raise AttributeError(
-                            f"NoiseModel '{term_cfg}' of observation term '{term_name}' is not callable."
-                            f" Received: {term_cfg.noise.func}"
-                        )
                     self._group_obs_class_instances.append(term_cfg.noise.func)
 
                 # create history buffers and calculate history term dimensions
