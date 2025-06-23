@@ -130,7 +130,7 @@ class NoiseModel:
         """
         pass
 
-    def apply(self, data: torch.Tensor) -> torch.Tensor:
+    def __call__(self, data: torch.Tensor) -> torch.Tensor:
         """Apply the noise to the data.
 
         Args:
@@ -140,16 +140,6 @@ class NoiseModel:
             The data with the noise applied. Shape is the same as the input data.
         """
         return self._noise_model_cfg.noise_cfg.func(data, self._noise_model_cfg.noise_cfg)
-
-    def __call__(self, data: torch.Tensor) -> torch.Tensor:
-        """Wrapper around apply to make the model callable.
-
-        Args:
-            data: The data to apply the noise to. Shape is (num_envs, ...).
-        Returns:
-            The data with the noise applied. Shape is the same as the input data.
-        """
-        return self.apply(data)
 
 
 class NoiseModelWithAdditiveBias(NoiseModel):
@@ -180,7 +170,7 @@ class NoiseModelWithAdditiveBias(NoiseModel):
         # reset the bias term
         self._bias[env_ids] = self._bias_noise_cfg.func(self._bias[env_ids], self._bias_noise_cfg)
 
-    def apply(self, data: torch.Tensor) -> torch.Tensor:
+    def __call__(self, data: torch.Tensor) -> torch.Tensor:
         """Apply bias noise to the data.
 
         Args:
@@ -189,14 +179,4 @@ class NoiseModelWithAdditiveBias(NoiseModel):
         Returns:
             The data with the noise applied. Shape is the same as the input data.
         """
-        return super().apply(data) + self._bias
-
-    def __call__(self, data: torch.Tensor) -> torch.Tensor:
-        """Wrapper around apply to make the model callable.
-
-        Args:
-            data: The data to apply the noise to. Shape is (num_envs, ...).
-        Returns:
-            The data with the noise applied. Shape is the same as the input data.
-        """
-        return self.apply(data)
+        return super().__call__(data) + self._bias
