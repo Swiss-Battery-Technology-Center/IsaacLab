@@ -529,7 +529,7 @@ class ObservationManager(ManagerBase):
                                     f" and optional parameters: {args_with_defaults}, but received: {term_params}."
                                 )
 
-                # prepare if noise is a noise model class
+                # prepare noise model classes
                 if term_cfg.noise is not None and isinstance(term_cfg.noise, noise.NoiseModelCfg):
                     noise_model_cls = term_cfg.noise.class_type
                     if not issubclass(noise_model_cls, noise.NoiseModel):
