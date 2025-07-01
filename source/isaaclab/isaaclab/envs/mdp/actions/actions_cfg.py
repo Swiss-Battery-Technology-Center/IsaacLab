@@ -385,11 +385,8 @@ class NeuralNetworkControllerActionCfg(ActionTermCfg):
     body_offset: OffsetCfg | None = None
     """Offset of target frame w.r.t. to the body frame. Defaults to None, in which case no offset is applied."""
 
-    task_frame_rel_path: str = None
-    """The path of a ``RigidObject``, relative to the sub-environment, representing task frame. Defaults to None."""
-
-    controller_cfg: OperationalSpaceControllerCfg = MISSING
-    """The configuration for the operational space controller."""
+    controller_cfg: DifferentialIKControllerCfg = None  # type: ignore
+    """The configuration for the used differential IK controller."""
 
     position_scale: float = 1.0
     """Scale factor for the position targets. Defaults to 1.0."""
@@ -419,10 +416,3 @@ class NeuralNetworkControllerActionCfg(ActionTermCfg):
 
     wrench_clip: float = float("inf")
     """Clip threshold factor for the wrench target. Defaults to +∞ (no clipping)."""
-
-    nullspace_joint_pos_target: str = "none"
-    """The joint targets for the null-space control: ``"none"``, ``"zero"``, ``"default"``, ``"center"``.
-
-    Note: Functional only when ``nullspace_control`` is set to ``"position"`` within the
-        ``OperationalSpaceControllerCfg``.
-    """
