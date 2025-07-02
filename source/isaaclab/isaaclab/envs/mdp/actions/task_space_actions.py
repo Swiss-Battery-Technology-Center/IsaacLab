@@ -16,6 +16,7 @@ from isaaclab.utils.assets import read_file
 import isaaclab.utils.math as math_utils
 import isaaclab.utils.string as string_utils
 from isaaclab.assets.articulation import Articulation
+from isaaclab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from isaaclab.controllers.differential_ik import DifferentialIKController
 from isaaclab.controllers.operational_space import OperationalSpaceController
 from isaaclab.managers.action_manager import ActionTerm
@@ -26,7 +27,6 @@ if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedEnv
 
     from . import actions_cfg
-    from .actions_cfg import DifferentialIKControllerCfg
 
 
 class DifferentialInverseKinematicsAction(ActionTerm):
@@ -1200,14 +1200,6 @@ class NeuralNetworkControllerAction(ActionTerm):
 
         self._sim_dt = env.sim.get_physics_dt()
 
-        # Import the neural network module
-        self._network_file_path = None
-        file_bytes = read_file(self.cfg.network_file)
-        self._nn = torch.jit.load(file_bytes, map_location=self.device).eval()
-        # ee_pose (7) + ee_force (3) + desired_state (10) + last action (6) + joint_vel (nDof)
-        self._nn_input = torch.zeros(self.num_envs, 23 + self._num_DoF, device=self.device)
-        self._nn_output = torch.zeros(self.num_envs, 6, device=self.device)
-
         # resolve the joints over which the action term is applied
         self._joint_ids, self._joint_names = self._asset.find_joints(self.cfg.joint_names)
         self._num_DoF = len(self._joint_ids)
@@ -1249,6 +1241,14 @@ class NeuralNetworkControllerAction(ActionTerm):
             self._offset_rot = torch.tensor(self.cfg.body_offset.rot, device=self.device).repeat(self.num_envs, 1)
         else:
             self._offset_pos, self._offset_rot = None, None
+
+        # Import the neural network module
+        self._network_file_path = None
+        file_bytes = read_file(self.cfg.network_file)
+        self._nn = torch.jit.load(file_bytes, map_location=self.device).eval()
+        # ee_pose (7) + ee_force (3) + desired_state (10) + last action (6) + joint_vel (nDof)
+        self._nn_input = torch.zeros(self.num_envs, 26 + self._num_DoF, device=self.device)
+        self._nn_output = torch.zeros(self.num_envs, 6, device=self.device)
 
         # create contact sensor
         self._contact_sensor_cfg = ContactSensorCfg(prim_path=self._asset.cfg.prim_path + "/" + self._ee_body_name)
