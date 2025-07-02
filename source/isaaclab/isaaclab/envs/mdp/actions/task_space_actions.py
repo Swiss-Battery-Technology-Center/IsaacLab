@@ -1191,7 +1191,7 @@ class NeuralNetworkControllerAction(ActionTerm):
     """The configuration of the action term."""
     _asset: Articulation
     """The articulation asset on which the action term is applied."""
-    _contact_sensor: ContactSensor = None
+    _contact_sensor: ContactSensor = None  # type: ignore
     """The contact sensor for the end-effector body."""
 
     def __init__(self, cfg: actions_cfg.NeuralNetworkControllerActionCfg, env: ManagerBasedEnv):
@@ -1202,7 +1202,7 @@ class NeuralNetworkControllerAction(ActionTerm):
 
         # Import the neural network module
         self._network_file_path = None
-        file_bytes = read_file(self._network_file_path)
+        file_bytes = read_file(self.cfg.network_file)
         self._nn = torch.jit.load(file_bytes, map_location=self.device).eval()
         # ee_pose (7) + ee_force (3) + desired_state (10) + last action (6) + joint_vel (nDof)
         self._nn_input = torch.zeros(self.num_envs, 23 + self._num_DoF, device=self.device)
@@ -1258,11 +1258,9 @@ class NeuralNetworkControllerAction(ActionTerm):
             self._contact_sensor._is_initialized = True
 
         # create the operational space controller
-        self.cfg.controller_cfg = DifferentialIKControllerCfg(
-            command_type="velocity", use_relative_mode=False, ik_method="dls"
-        )
+        controller_cfg = DifferentialIKControllerCfg(command_type="velocity", use_relative_mode=False, ik_method="dls")
         self._diff_ik_controller = DifferentialIKController(
-            cfg=self.cfg.controller_cfg, num_envs=self.num_envs, device=self.device
+            cfg=controller_cfg, num_envs=self.num_envs, device=self.device
         )
 
         # create tensors for raw and processed actions
@@ -1290,17 +1288,11 @@ class NeuralNetworkControllerAction(ActionTerm):
         # create the joint velocity command tensor
         self._joint_vel_command = torch.zeros(self.num_envs, self._num_DoF, device=self.device)
 
-        # save the scale as batched tensors
-        self._position_scale = torch.full((self.num_envs, 1), self.cfg.position_scale, device=self.device)
-        self._orientation_scale = torch.full((self.num_envs, 1), self.cfg.orientation_scale, device=self.device)
-        self._wrench_scale = torch.full((self.num_envs, 1), self.cfg.wrench_scale, device=self.device)
-        self._stiffness_scale = torch.full((self.num_envs, 1), self.cfg.stiffness_scale, device=self.device)
-        self._damping_ratio_scale = torch.full((self.num_envs, 1), self.cfg.damping_ratio_scale, device=self.device)
-
-        # save the clip thresholds as batched tensors
-        self._position_clip = torch.full((self.num_envs, 1), abs(self.cfg.position_clip), device=self.device)
-        self._orientation_clip = torch.full((self.num_envs, 1), abs(self.cfg.orientation_clip), device=self.device)
-        self._wrench_clip = torch.full((self.num_envs, 1), abs(self.cfg.wrench_clip), device=self.device)
+        # save the scale and clip as batched tensors
+        self._lin_vel_scale = torch.full((self.num_envs, 1), self.cfg.linear_velocity_scale, device=self.device)
+        self._lin_vel_clip = torch.full((self.num_envs, 1), abs(self.cfg.linear_velecity_clip), device=self.device)
+        self._ang_vel_scale = torch.full((self.num_envs, 1), self.cfg.angular_velocity_scale, device=self.device)
+        self._ang_vel_clip = torch.full((self.num_envs, 1), abs(self.cfg.angular_velocity_clip), device=self.device)
 
     """
     Properties.
@@ -1416,7 +1408,7 @@ class NeuralNetworkControllerAction(ActionTerm):
         rigid_child_prim = None
         # Loop through the list and stop at the first RigidObject found
         for prim in child_prims:
-            if prim.HasAPI(UsdPhysics.RigidBodyAPI):
+            if prim.HasAPI(UsdPhysics.RigidBodyAPI):  # type: ignore
                 rigid_child_prim = prim
                 break
         if rigid_child_prim is None:
@@ -1511,3 +1503,15 @@ class NeuralNetworkControllerAction(ActionTerm):
 
         self._raw_actions[:] = actions
         self._processed_actions[:] = nn_output
+
+        self._processed_actions[:, :3] = torch.clamp(
+            self._processed_actions[:, :3] * self._lin_vel_scale,
+            min=-self._lin_vel_clip,
+            max=self._lin_vel_clip,
+        )
+
+        self._processed_actions[:, 3:6] = torch.clamp(
+            self._processed_actions[:, 3:6] * self._ang_vel_scale,
+            min=-self._ang_vel_clip,
+            max=self._ang_vel_clip,
+        )

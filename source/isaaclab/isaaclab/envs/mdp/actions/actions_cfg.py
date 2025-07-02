@@ -376,6 +376,9 @@ class NeuralNetworkControllerActionCfg(ActionTermCfg):
 
     class_type: type[ActionTerm] = task_space_actions.NeuralNetworkControllerAction
 
+    network_file: str = MISSING
+    """Path to the TorchScript file containing the neural network model."""
+
     joint_names: list[str] = MISSING
     """List of joint names or regex expressions that the action will be mapped to."""
 
@@ -385,34 +388,14 @@ class NeuralNetworkControllerActionCfg(ActionTermCfg):
     body_offset: OffsetCfg | None = None
     """Offset of target frame w.r.t. to the body frame. Defaults to None, in which case no offset is applied."""
 
-    controller_cfg: DifferentialIKControllerCfg = None  # type: ignore
-    """The configuration for the used differential IK controller."""
+    linear_velocity_scale: float = 1.0
+    """Scale factor for the linear velocity targets. Defaults to 1.0."""
 
-    position_scale: float = 1.0
-    """Scale factor for the position targets. Defaults to 1.0."""
+    angular_velocity_scale: float = 1.0
+    """Scale factor for the angular velocity targets. Defaults to 1.0."""
 
-    orientation_scale: float = 1.0
-    """Scale factor for the orientation (quad for ``pose_abs`` or axis-angle for ``pose_rel``). Defaults to 1.0."""
+    linear_velecity_clip: float = float("inf")
+    """Clip threshold factor for the linear velocity target. Defaults to +∞ (no clipping)."""
 
-    wrench_scale: float = 1.0
-    """Scale factor for the wrench targets. Defaults to 1.0."""
-
-    stiffness_scale: float = 1.0
-    """Scale factor for the stiffness commands. Defaults to 1.0."""
-
-    damping_ratio_scale: float = 1.0
-    """Scale factor for the damping ratio commands. Defaults to 1.0."""
-
-    position_clip: float = float("inf")
-    """Clip threshold factor for the position target. Defaults to +∞ (no clipping)."""
-
-    orientation_clip: float = float("inf")
-    """Clip threshold factor for the orientation target. Defaults to +∞ (no clipping).
-
-    Note: The clipping operates on the *magnitude* of the delta angle-axis vector
-        (the rotation angle), and it behaves the same for both absolute (`pose_abs`)
-        and relative (`pose_rel`) orientation targets.
-    """
-
-    wrench_clip: float = float("inf")
-    """Clip threshold factor for the wrench target. Defaults to +∞ (no clipping)."""
+    angular_velocity_clip: float = float("inf")
+    """Clip threshold factor for the angular velocity target. Defaults to +∞ (no clipping)."""
