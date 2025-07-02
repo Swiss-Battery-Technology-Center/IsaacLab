@@ -1301,7 +1301,7 @@ class NeuralNetworkControllerAction(ActionTerm):
     @property
     def action_dim(self) -> int:
         """Dimension of the action space of operational space control."""
-        return self._diff_ik_controller.action_dim
+        return 10  # abs pose (7) + force (3)
 
     @property
     def raw_actions(self) -> torch.Tensor:
