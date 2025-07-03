@@ -1246,9 +1246,10 @@ class NeuralNetworkControllerAction(ActionTerm):
         self._network_file_path = None
         file_bytes = read_file(self.cfg.network_file)
         self._nn = torch.jit.load(file_bytes, map_location=self.device).eval()
-        # ee_pose (7) + ee_force (3) + desired_state (10) + last action (6) + joint_vel (nDof)
-        self._nn_input = torch.zeros(self.num_envs, 26 + self._num_DoF, device=self.device)
+        # ee_pose (7) + ee_force (3) + desired_state (10) + last action (6)
+        self._nn_input = torch.zeros(self.num_envs, 26, device=self.device)
         self._nn_output = torch.zeros(self.num_envs, 6, device=self.device)
+        self._ee_vel_ref = torch.zeros_like(self._nn_output)
 
         # create contact sensor
         self._contact_sensor_cfg = ContactSensorCfg(prim_path=self._asset.cfg.prim_path + "/" + self._ee_body_name)
@@ -1351,17 +1352,16 @@ class NeuralNetworkControllerAction(ActionTerm):
         self._nn_input[:, 7:10] = self._ee_force_b  # ee force in root frame
         self._nn_input[:, 10:20] = actions  # desired state (pose, fx, fy, fz)
         self._nn_input[:, 20:26] = self._nn_output  # last action (vx, vy, vz, vr, vp, vy)
-        self._nn_input[:, 26:] = self._joint_vel  # joint velocities
 
         with torch.inference_mode():
-            self._nn_output = self._nn(self._nn_input).view(self.num_envs, self._num_DoF)
+            self._nn_output = self._nn(self._nn_input).view(self.num_envs, 6)
 
         # Pre-process the raw actions
         self._preprocess_actions(actions, self._nn_output)
 
         # set command into controller
         self._diff_ik_controller.set_command(
-            command=self._processed_actions, ee_pos=self._ee_pose_b[:, 0:3], ee_quat=self._ee_pose_b[:, 3:7]
+            command=self._ee_vel_ref, ee_pos=self._ee_pose_b[:, 0:3], ee_quat=self._ee_pose_b[:, 3:7]
         )
 
     def apply_actions(self):
@@ -1386,6 +1386,10 @@ class NeuralNetworkControllerAction(ActionTerm):
             env_ids: The environment indices to reset. If ``None``, all environments are reset.
         """
         self._raw_actions[env_ids] = 0.0
+        self._processed_actions[env_ids] = 0.0
+        self._nn_input[env_ids] = 0.0
+        self._nn_output[env_ids] = 0.0
+        self._ee_vel_ref[env_ids] = 0.0
         self._joint_vel_command[env_ids] = 0.0
         if self._contact_sensor is not None:
             self._contact_sensor.reset(env_ids)
@@ -1502,16 +1506,17 @@ class NeuralNetworkControllerAction(ActionTerm):
         """
 
         self._raw_actions[:] = actions
-        self._processed_actions[:] = nn_output
+        self._processed_actions[:] = self._raw_actions
+        self._ee_vel_ref[:] = nn_output
 
-        self._processed_actions[:, :3] = torch.clamp(
-            self._processed_actions[:, :3] * self._lin_vel_scale,
+        self._ee_vel_ref[:, :3] = torch.clamp(
+            self._ee_vel_ref[:, :3] * self._lin_vel_scale,
             min=-self._lin_vel_clip,
             max=self._lin_vel_clip,
         )
 
-        self._processed_actions[:, 3:6] = torch.clamp(
-            self._processed_actions[:, 3:6] * self._ang_vel_scale,
+        self._ee_vel_ref[:, 3:6] = torch.clamp(
+            self._ee_vel_ref[:, 3:6] * self._ang_vel_scale,
             min=-self._ang_vel_clip,
             max=self._ang_vel_clip,
         )
