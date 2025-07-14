@@ -863,6 +863,76 @@ class OperationalSpaceControllerAction(ActionTerm):
         scale = torch.where(angle > 0, torch.minimum(angle, max_angle) / angle, torch.ones_like(angle))
         return v * scale
 
+    def modify_pd_gains(
+        self,
+        p_gains: torch.Tensor | None = None,
+        d_gains: torch.Tensor | None = None,
+        current_task_frame_pose_b: torch.Tensor | None = None,
+    ):
+        """Modify the PD gains of the operational space controller.
+
+        Args:
+            p_gains: The new proportional gains for the operational space controller. Tensor of shape (``num_envs``,
+            ``6``). If None, the current
+                value is kept.
+            d_gains: The new derivative gains for the operational space controller. Tensor of shape (``num_envs``,
+            ``6``). If None, the current value is kept.
+            current_task_frame_pose_b: Current pose of the task frame, in root frame, in which the targets and the
+                (motion/wrench) control axes are defined. It is a tensor of shape (``num_envs``, 7),
+                containing position and the quaternion ``(w, x, y, z)``. Defaults to None.
+        """
+
+        if p_gains is not None:
+
+            # Check the dimension of p gains
+            if p_gains.shape != (self.num_envs, 6):
+                raise ValueError(
+                    f"Invalid shape for the proportional gains. Expected: (num_envs, 6), Got: {p_gains.shape}"
+                )
+
+            self._osc._motion_p_gains_task = self._osc._selection_matrix_motion_task @ torch.diag_embed(p_gains)
+            if d_gains is None:
+                self._osc._motion_d_gains_task = torch.diag_embed(
+                    2
+                    * torch.diagonal(self._osc._motion_p_gains_task, dim1=-2, dim2=-1).sqrt()
+                    * torch.as_tensor(
+                        self._osc.cfg.motion_damping_ratio_task, dtype=torch.float, device=self._osc._device
+                    ).reshape(1, -1)
+                )
+
+        if d_gains is not None:
+
+            # Check the dimension of d gains
+            if d_gains.shape != (self.num_envs, 6):
+                raise ValueError(
+                    f"Invalid shape for the derivative gains. Expected: (num_envs, 6), Got: {d_gains.shape}"
+                )
+
+            self._osc._motion_d_gains_task = torch.diag_embed(
+                2 * torch.diagonal(self._osc._motion_p_gains_task, dim1=-2, dim2=-1).sqrt() * d_gains
+            )
+
+        # Project the task frame gains to the root frame if needed
+        if p_gains is not None or d_gains is not None:
+
+            if current_task_frame_pose_b is None:
+                current_task_frame_pose_b = torch.tensor(
+                    [[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]] * self.num_envs, device=self._osc._device
+                )
+
+            # Rotation of task frame wrt root frame, converts a coordinate from task frame to root frame.
+            R_task_b = math_utils.matrix_from_quat(current_task_frame_pose_b[:, 3:])
+            # Rotation of root frame wrt task frame, converts a coordinate from root frame to task frame.
+            R_b_task = R_task_b.mT
+
+            # Transform motion control stiffness gains from task frame to root frame
+            self._osc._motion_p_gains_b[:, 0:3, 0:3] = R_task_b @ self._osc._motion_p_gains_task[:, 0:3, 0:3] @ R_b_task
+            self._osc._motion_p_gains_b[:, 3:6, 3:6] = R_task_b @ self._osc._motion_p_gains_task[:, 3:6, 3:6] @ R_b_task
+
+            # Transform motion control damping gains from task frame to root frame
+            self._osc._motion_d_gains_b[:, 0:3, 0:3] = R_task_b @ self._osc._motion_d_gains_task[:, 0:3, 0:3] @ R_b_task
+            self._osc._motion_d_gains_b[:, 3:6, 3:6] = R_task_b @ self._osc._motion_d_gains_task[:, 3:6, 3:6] @ R_b_task
+
 
 class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction):
     r"""Operational space controller action term, filtered.
@@ -1034,75 +1104,56 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
             / (1.0 + self._ori_lpf_bandwidth_rad * self._lpf_bandwidth_dT)
         )
 
-    def modify_pd_gains(
-        self,
-        p_gains: torch.Tensor | None = None,
-        d_gains: torch.Tensor | None = None,
-        current_task_frame_pose_b: torch.Tensor | None = None,
-    ):
-        """Modify the PD gains of the operational space controller.
+
+class OperationalSpaceControllerActionDeadzone(OperationalSpaceControllerAction):
+    r"""Operational space controller action term with deadzones.
+
+    This action term performs pre-processing of the actions for operational space control and passeses the joint
+    torques through a deadzone.
+    """
+
+    cfg: actions_cfg.OperationalSpaceControllerActionDeadzoneCfg
+
+    def __init__(self, cfg: actions_cfg.OperationalSpaceControllerActionDeadzoneCfg, env: ManagerBasedEnv):
+        super().__init__(cfg, env)
+
+        self._joint_effort_deadzone_abs = torch.zeros(self.num_envs, self._num_DoF, 2, device=self.device)
+        self._joint_efforts_net = self._joint_efforts.clone()
+
+    def apply_actions(self):
+        """Computes the joint efforts for operational space control and applies them to the articulation."""
+
+        super().apply_actions()
+        self._joint_efforts_net[:] = self._joint_efforts
+        self._joint_effort_deadzone_abs = torch.abs(self._joint_effort_deadzone_abs)
+        neg_mask = self._joint_efforts_net < -self._joint_effort_deadzone_abs[..., 0]
+        pos_mask = self._joint_efforts_net > self._joint_effort_deadzone_abs[..., 1]
+        self._joint_efforts_net[:] = torch.where(
+            pos_mask,
+            self._joint_efforts_net - self._joint_effort_deadzone_abs[..., 1],
+            torch.where(
+                neg_mask,
+                self._joint_efforts_net + self._joint_effort_deadzone_abs[..., 0],
+                torch.zeros_like(self._joint_efforts_net),
+            ),
+        )
+        self._asset.set_joint_effort_target(self._joint_efforts_net, joint_ids=self._joint_ids)
+
+    def modify_joint_effort_deadzone(self, joint_effort_deadzone_abs: torch.tensor):
+        """Modify the joint effort deadzone.
 
         Args:
-            p_gains: The new proportional gains for the operational space controller. Tensor of shape (``num_envs``,
-            ``6``). If None, the current
-                value is kept.
-            d_gains: The new derivative gains for the operational space controller. Tensor of shape (``num_envs``,
-            ``6``). If None, the current value is kept.
-            current_task_frame_pose_b: Current pose of the task frame, in root frame, in which the targets and the
-                (motion/wrench) control axes are defined. It is a tensor of shape (``num_envs``, 7),
-                containing position and the quaternion ``(w, x, y, z)``. Defaults to None.
+            joint_effort_deadzone_abs (torch.tensor): The new joint effort deadzone. It should be a tensor of shape
+                (``num_envs``, ``num_DoF``, 2), where the last dimension contains the lower and upper deadzone
+                thresholds.
         """
 
-        if p_gains is not None:
-
-            # Check the dimension of p gains
-            if p_gains.shape != (self.num_envs, 6):
-                raise ValueError(
-                    f"Invalid shape for the proportional gains. Expected: (num_envs, 6), Got: {p_gains.shape}"
-                )
-
-            self._osc._motion_p_gains_task = self._osc._selection_matrix_motion_task @ torch.diag_embed(p_gains)
-            if d_gains is None:
-                self._osc._motion_d_gains_task = torch.diag_embed(
-                    2
-                    * torch.diagonal(self._osc._motion_p_gains_task, dim1=-2, dim2=-1).sqrt()
-                    * torch.as_tensor(
-                        self._osc.cfg.motion_damping_ratio_task, dtype=torch.float, device=self._osc._device
-                    ).reshape(1, -1)
-                )
-
-        if d_gains is not None:
-
-            # Check the dimension of d gains
-            if d_gains.shape != (self.num_envs, 6):
-                raise ValueError(
-                    f"Invalid shape for the derivative gains. Expected: (num_envs, 6), Got: {d_gains.shape}"
-                )
-
-            self._osc._motion_d_gains_task = torch.diag_embed(
-                2 * torch.diagonal(self._osc._motion_p_gains_task, dim1=-2, dim2=-1).sqrt() * d_gains
+        if joint_effort_deadzone_abs.shape != (self.num_envs, self._num_DoF, 2):
+            raise ValueError(
+                "Invalid shape for the joint effort deadzone. Expected: (num_envs, num_DoF, 2), "
+                f"Got: {joint_effort_deadzone_abs.shape}"
             )
-
-        # Project the task frame gains to the root frame if needed
-        if p_gains is not None or d_gains is not None:
-
-            if current_task_frame_pose_b is None:
-                current_task_frame_pose_b = torch.tensor(
-                    [[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]] * self.num_envs, device=self._osc._device
-                )
-
-            # Rotation of task frame wrt root frame, converts a coordinate from task frame to root frame.
-            R_task_b = math_utils.matrix_from_quat(current_task_frame_pose_b[:, 3:])
-            # Rotation of root frame wrt task frame, converts a coordinate from root frame to task frame.
-            R_b_task = R_task_b.mT
-
-            # Transform motion control stiffness gains from task frame to root frame
-            self._osc._motion_p_gains_b[:, 0:3, 0:3] = R_task_b @ self._osc._motion_p_gains_task[:, 0:3, 0:3] @ R_b_task
-            self._osc._motion_p_gains_b[:, 3:6, 3:6] = R_task_b @ self._osc._motion_p_gains_task[:, 3:6, 3:6] @ R_b_task
-
-            # Transform motion control damping gains from task frame to root frame
-            self._osc._motion_d_gains_b[:, 0:3, 0:3] = R_task_b @ self._osc._motion_d_gains_task[:, 0:3, 0:3] @ R_b_task
-            self._osc._motion_d_gains_b[:, 3:6, 3:6] = R_task_b @ self._osc._motion_d_gains_task[:, 3:6, 3:6] @ R_b_task
+        self._joint_effort_deadzone_abs[:] = torch.abs(joint_effort_deadzone_abs)
 
 
 class OperationalSpaceControllerActionFilteredDeadzone(OperationalSpaceControllerActionFiltered):
@@ -1115,7 +1166,6 @@ class OperationalSpaceControllerActionFilteredDeadzone(OperationalSpaceControlle
     cfg: actions_cfg.OperationalSpaceControllerActionFilteredDeadzoneCfg
 
     def __init__(self, cfg: actions_cfg.OperationalSpaceControllerActionFilteredDeadzoneCfg, env: ManagerBasedEnv):
-        # initialize the action term
         super().__init__(cfg, env)
 
         self._joint_effort_deadzone_abs = torch.zeros(self.num_envs, self._num_DoF, 2, device=self.device)
@@ -1124,24 +1174,11 @@ class OperationalSpaceControllerActionFilteredDeadzone(OperationalSpaceControlle
     def apply_actions(self):
         """Computes the joint efforts for operational space control and applies them to the articulation."""
 
-        # Apply the filtered actions
         super().apply_actions()
-
         self._joint_efforts_net[:] = self._joint_efforts
-
-        # Make sure self._joint_torque_deadzone_abs has all positive elements
         self._joint_effort_deadzone_abs = torch.abs(self._joint_effort_deadzone_abs)
-
-        # Create masks based on the deadzone thresholds.
-        # For negative efforts: check if effort < -deadzone[...,0]
         neg_mask = self._joint_efforts_net < -self._joint_effort_deadzone_abs[..., 0]
-        # For positive efforts: check if effort > deadzone[...,1]
         pos_mask = self._joint_efforts_net > self._joint_effort_deadzone_abs[..., 1]
-
-        # Compute the adjusted efforts:
-        # If a positive effort is above the threshold, subtract the positive threshold.
-        # If a negative effort is below the threshold, add the negative threshold.
-        # Otherwise, set the effort to zero.
         self._joint_efforts_net[:] = torch.where(
             pos_mask,
             self._joint_efforts_net - self._joint_effort_deadzone_abs[..., 1],
@@ -1151,7 +1188,6 @@ class OperationalSpaceControllerActionFilteredDeadzone(OperationalSpaceControlle
                 torch.zeros_like(self._joint_efforts_net),
             ),
         )
-        # Apply the joint efforts to the articulation
         self._asset.set_joint_effort_target(self._joint_efforts_net, joint_ids=self._joint_ids)
 
     def modify_joint_effort_deadzone(self, joint_effort_deadzone_abs: torch.tensor):
@@ -1163,12 +1199,9 @@ class OperationalSpaceControllerActionFilteredDeadzone(OperationalSpaceControlle
                 thresholds.
         """
 
-        # Check the dimension of joint_effort_deadzone_abs
         if joint_effort_deadzone_abs.shape != (self.num_envs, self._num_DoF, 2):
             raise ValueError(
                 "Invalid shape for the joint effort deadzone. Expected: (num_envs, num_DoF, 2), "
                 f"Got: {joint_effort_deadzone_abs.shape}"
             )
-
-        # Modify the joint effort deadzone
         self._joint_effort_deadzone_abs[:] = torch.abs(joint_effort_deadzone_abs)

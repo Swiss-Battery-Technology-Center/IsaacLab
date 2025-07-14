@@ -343,6 +343,16 @@ class OperationalSpaceControllerActionFilteredCfg(OperationalSpaceControllerActi
 
 
 @configclass
+class OperationalSpaceControllerActionDeadzoneCfg(OperationalSpaceControllerActionCfg):
+    """Configuration for operational space controller action term with joint torque deadzones.
+
+    See :class:`OperationalSpaceControllerActionDeadzone` for more details.
+    """
+
+    class_type: type[ActionTerm] = task_space_actions.OperationalSpaceControllerActionDeadzone
+
+
+@configclass
 class OperationalSpaceControllerActionFilteredDeadzoneCfg(OperationalSpaceControllerActionFilteredCfg):
     """Configuration for filtered operational space controller action term with joint torque deadzones.
 

@@ -118,7 +118,7 @@ done
 ###############################################
 if [ "$LIBRARY" = "rsl_rl" ]; then
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
-    RAY_CFG_CLASS="UnscrewFrankaRslRlJobCfg"
+    RAY_CFG_CLASS="UnscrewFrankaRslRlRNNJobCfg"
     RAY_METRIC="Episode_Reward/screw_engaged"
 elif [ "$LIBRARY" = "skrl" ]; then
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/skrl/train.py"
@@ -127,7 +127,7 @@ elif [ "$LIBRARY" = "skrl" ]; then
 else
     echo "WARNING: Library '$LIBRARY' is not recognized. Defaulting to 'rsl_rl'."
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
-    RAY_CFG_CLASS="UnscrewFrankaRslRlJobCfg"
+    RAY_CFG_CLASS="UnscrewFrankaRslRlRNNJobCfg"
     RAY_METRIC="Episode_Reward/screw_engaged"
     LIBRARY="rsl_rl"
 fi
