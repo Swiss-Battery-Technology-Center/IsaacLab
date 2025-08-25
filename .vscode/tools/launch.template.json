@@ -118,7 +118,7 @@
             "--video", "--video_length", "500"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
-        }, 
+        },
         {
             "name": "Python: Record sbtc-reach-franka-OSC",
             "type": "debugpy",
