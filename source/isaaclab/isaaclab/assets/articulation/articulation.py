@@ -568,11 +568,6 @@ class Articulation(AssetBase):
         self._data._body_state_w.timestamp = -1.0
         self._data._body_link_state_w.timestamp = -1.0
         self._data._body_com_state_w.timestamp = -1.0
-        self._data._body_link_pose_w.timestamp = -1.0
-        self._data._body_com_vel_w.timestamp = -1.0
-        self._data._body_link_vel_w.timestamp = -1.0
-        self._data._body_com_pose_b.timestamp = -1.0
-        self._data._body_com_pose_w.timestamp = -1.0
         # set into simulation
         self.root_physx_view.set_dof_positions(self._data.joint_pos, indices=physx_env_ids)
 
