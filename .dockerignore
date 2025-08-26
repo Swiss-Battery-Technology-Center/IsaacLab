@@ -26,4 +26,4 @@ _isaac_sim?
 # Docker history
 docker/.isaac-lab-docker-history
 # SBTC: ignore isaaclab eureka symlink
-_isaaclab_eureka
+# _isaaclab_eureka

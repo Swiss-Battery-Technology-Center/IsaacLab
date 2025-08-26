@@ -154,12 +154,12 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
   - type: bind
     source: ../.vscode/tools
     target: ${DOCKER_ISAACLAB_PATH}/.vscode/tools
+  # - type: bind
+  #   source: ../../../usd/
+  #   target: ${DOCKER_ISAACLAB_PATH}/usd
   - type: bind
-    source: ../../../usd/
-    target: ${DOCKER_ISAACLAB_PATH}/usd
-  - type: bind
-    source: ../../IsaacLabEureka/
-    target: ${DOCKER_ISAACLAB_PATH}/../IsaacLabEureka
+    source: ../eureka
+    target: ${DOCKER_ISAACLAB_PATH}/eureka
   - type: bind
     source: sbtc/bash_scripts/train_with_tmux.sh
     target: ${DOCKER_ISAACLAB_PATH}/train_with_tmux.sh
@@ -171,7 +171,7 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
     target: ${DOCKER_ISAACLAB_PATH}/logs
   - type: bind
     source: ../../../logs/eureka/
-    target: ${DOCKER_ISAACLAB_PATH}/../IsaacLabEureka/logs
+    target: ${DOCKER_ISAACLAB_PATH}/eureka/logs
   - type: bind
     source: ../../../logs/ray/
     target: /tmp/ray
@@ -248,7 +248,7 @@ services:
       dockerfile: IsaacLab/docker/Dockerfile.sbtc
       args:
         - ISAACLAB_PATH_ARG=${DOCKER_ISAACLAB_PATH}
-    image: ${SBTC_IMAGE_NAME:-NONE}
+    image: isaac-lab-sbtc
     container_name: isaac-lab-sbtc #container_name: ${CONTAINER_NAME}
     environment: *default-isaac-lab-environment
     volumes: *default-isaac-lab-sbtc-volumes

@@ -21,9 +21,12 @@ RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip instal
 WORKDIR ${ISAACLAB_PATH}/
 
 # Install Isaac Lab Eureka
-COPY IsaacLabEureka/ ${ISAACLAB_PATH}/../IsaacLabEureka/
-RUN ln -sf ${ISAACLAB_PATH}/../IsaacLabEureka ${ISAACLAB_PATH}/_isaaclab_eureka
-RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e ${ISAACLAB_PATH}/_isaaclab_eureka/source/isaaclab_eureka
+# Install IsaacLab Eureka from submodule at IsaacLab/eureka
+COPY IsaacLab/eureka/ ${ISAACLAB_PATH}/eureka/
+
+# Install as editable package (Eureka has `source/isaaclab_eureka/`)
+RUN ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e ${ISAACLAB_PATH}/eureka/source/isaaclab_eureka
+
 
 # Install Ray
 RUN DEBIAN_FRONTEND=noninteractive apt-get install wget
@@ -36,7 +39,7 @@ RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip instal
 RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install optuna bayesian-optimization mlflow
 
 # Add symbolic links
-RUN echo 'source ${ISAACLAB_PATH}/_isaaclab_eureka/api_keys/api_key_importer.sh' >> ${HOME}/.bashrc
+RUN echo 'source ${ISAACLAB_PATH}/eureka/api_keys/api_key_importer.sh' >> ${HOME}/.bashrc
 RUN echo "export LIVESTREAM=0" >> ${HOME}/.bashrc
 RUN echo "export HEADLESS=1" >> ${HOME}/.bashrc
 
