@@ -11,7 +11,7 @@ cat <<EOT > job.sh
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task=8
 #SBATCH --gpus=1
-#SBATCH --time=1:00:00
+#SBATCH --time=24:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=jiwon.you@epfl.ch
 #SBATCH --mem-per-cpu=4048

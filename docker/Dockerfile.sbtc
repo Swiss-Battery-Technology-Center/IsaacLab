@@ -15,9 +15,17 @@ ENV ISAACLAB_PATH=${ISAACLAB_PATH_ARG}
 
 RUN apt-get update
 
-RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install --upgrade pip && \
-    DEBIAN_FRONTEND=noninteractive  ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install torch-tb-profiler
+# Upgrade pip
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install --upgrade pip
 
+# *** Pin Torch to cu118 for V100 (SM 7.0) ***
+# Use PyTorch cu118 wheels that include sm_70; force reinstall to override anything in the base.
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install --index-url https://download.pytorch.org/whl/cu118 \
+    --no-cache-dir --upgrade --force-reinstall \
+    torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2
+
+# Other Python deps that don’t change Torch
+RUN DEBIAN_FRONTEND=noninteractive ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install torch-tb-profiler
 WORKDIR ${ISAACLAB_PATH}/
 
 # Install Isaac Lab Eureka

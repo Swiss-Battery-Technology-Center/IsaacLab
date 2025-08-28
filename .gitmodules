@@ -1,3 +1,6 @@
 [submodule "eureka"]
 	path = eureka
 	url = git@github.com:Swiss-Battery-Technology-Center/IsaacLabEureka.git
+[submodule "isaac_rlhf"]
+	path = isaac_rlhf
+	url = git@github.com:andrschl/isaac_rlhf.git
