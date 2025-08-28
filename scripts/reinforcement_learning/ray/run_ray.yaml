@@ -1,0 +1,14 @@
+# Minimal things you might change between runs
+task: "Isaac-Humanoid-v0"   # set this per run
+library: "rsl_rl"                       # or "skrl"
+num_samples: 32                         # per run
+
+run_mode: "local"
+num_workers_per_node: 1
+repeat_run_count: 1
+process_response_timeout: 120.0
+max_lines_to_search_experiment_logs: 1000
+max_log_extraction_errors: 2
+mode: "max"
+library: "rsl_rl"
+yaloli

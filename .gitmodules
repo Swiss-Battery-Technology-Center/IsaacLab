@@ -5,3 +5,9 @@
 	path = isaac_rlhf
 	url = git@github.com:andrschl/isaac_rlhf.git
 	branch = llm_preference
+[submodule "sbtc-gym"]
+	path = sbtc-gym
+	url = git@github.com:Swiss-Battery-Technology-Center/sbtc-gym.git
+[submodule "sbtc-robots"]
+	path = sbtc-robots
+	url = git@github.com:Swiss-Battery-Technology-Center/sbtc-robots.git

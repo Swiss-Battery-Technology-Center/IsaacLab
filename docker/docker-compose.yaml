@@ -132,23 +132,23 @@ x-default-isaac-lab-sbtc-volumes: &default-isaac-lab-sbtc-volumes
     source: vscode-server
     target: ${DOCKER_USER_HOME}/.vscode-server
   - type: bind
-    source: ../../sbtc-robots/src/kinova/kinova.py
+    source: ../sbtc-robots/src/kinova/kinova.py
     target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_assets/isaaclab_assets/robots/kinova.py
     read_only: false
   - type: bind
-    source: ../../sbtc-robots/src/franka/franka.py
+    source: ../sbtc-robots/src/franka/franka.py
     target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_assets/isaaclab_assets/robots/franka.py
     read_only: false
   - type: bind
-    source: ../../sbtc-robots/src/universal_robots/universal_robots.py
+    source: ../sbtc-robots/src/universal_robots/universal_robots.py
     target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_assets/isaaclab_assets/robots/universal_robots.py
     read_only: false
   - type: bind
-    source: ../../sbtc-gym/src/sbtc_tasks/
+    source: ../sbtc-gym/src/sbtc_tasks/
     target: ${DOCKER_ISAACLAB_PATH}/source/isaaclab_tasks/isaaclab_tasks/sbtc_tasks/
     read_only: false
   - type: bind
-    source: ../../sbtc-gym/src/sbtc_ray/
+    source: ../sbtc-gym/src/sbtc_ray/
     target: ${DOCKER_ISAACLAB_PATH}/scripts/reinforcement_learning/ray/sbtc_ray/
     read_only: false
   - type: bind
@@ -277,6 +277,28 @@ services:
     entrypoint: bash
     stdin_open: true
     tty: true
+
+  isaac-lab-rlhf:
+    profiles: ["rlhf"]
+    env_file:
+      - .env.base
+      - .env.rlhf
+    build:
+      context: ../../        # same as your other profiles
+      dockerfile: IsaacLab/docker/Dockerfile.rlhf
+      args:
+        - BASE_IMAGE=isaac-lab-base${DOCKER_NAME_SUFFIX-}
+        - ISAACLAB_PATH_ARG=${DOCKER_ISAACLAB_PATH}
+    image: isaac-lab-rlhf
+    container_name: isaac-lab-rlhf
+    environment: *default-isaac-lab-environment
+    volumes: *default-isaac-lab-volumes   # reuse your standard dev overlays
+    network_mode: host
+    deploy: *default-isaac-lab-deploy
+    entrypoint: bash
+    stdin_open: true
+    tty: true
+
 
 volumes:
   # isaac-sim

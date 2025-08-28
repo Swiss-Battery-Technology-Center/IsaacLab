@@ -1,0 +1,4 @@
+# file: ray_task_configs/Isaac-Humanoid-v0.yaml
+cfg_file: "/workspace/isaaclab/scripts/reinforcement_learning/ray/isaaclab_default_ray/humanoid_cfg.py"
+cfg_class: "HumanoidRslRlJobCfg"     # put the right JobCfg class for *lift cube*
+metric: "Eureka/success_metric"              # choose the primary reward metric for this task
