@@ -118,16 +118,13 @@ done
 ###############################################
 if [ "$LIBRARY" = "rsl_rl" ]; then
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
-    RAY_CFG_CLASS="UnscrewFrankaRslRlRNNJobCfg"
     RAY_METRIC="Episode_Reward/screw_engaged"
 elif [ "$LIBRARY" = "skrl" ]; then
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/skrl/train.py"
-    RAY_CFG_CLASS="UnscrewFrankaSkrlJobCfg"
     RAY_METRIC="Info_/_Episode_Reward/screw_engaged"
 else
     echo "WARNING: Library '$LIBRARY' is not recognized. Defaulting to 'rsl_rl'."
     LIBRARY_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/rsl_rl/train.py"
-    RAY_CFG_CLASS="UnscrewFrankaRslRlRNNJobCfg"
     RAY_METRIC="Episode_Reward/screw_engaged"
     LIBRARY="rsl_rl"
 fi
@@ -148,7 +145,7 @@ elif [ "$WORKFLOW" = "ray" ]; then
     TRAINING_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/tuner.py"
     # Define default arguments for ray tuner.
     ray_default_args=(--cfg_file "${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/sbtc_ray/unscrew_franka_cfg.py" \
-                      --cfg_class "${RAY_CFG_CLASS}" \
+                      --cfg_class "UnscrewSeedRandCfg" \
                       --run_mode "local" \
                       --workflow "${LIBRARY_SCRIPT}" \
                       --num_workers_per_node 1 \
@@ -159,7 +156,9 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --process_response_timeout 120.0 \
                       --max_lines_to_search_experiment_logs 1000 \
                       --max_log_extraction_errors 2 \
-                      )
+                      --progress_reporter "None" \
+                      --stopper "None" \
+                    )
     merge_default_args ray_default_args user_args final_args  #  merge defaults with any overrides in user_args
     SESSION_NAME="ray_training"
 else
