@@ -66,7 +66,7 @@ WORKFLOW="isaaclab"
 LIBRARY="rsl_rl"
 
 # Default arguments for the isaaclab workflow (for rsl_rl and skrl)
-default_args=(--task "SBTC-Unscrew-Franka-OSC-RNN-v0" --headless --livestream 0  --seed 10 --curriculum_multiplier 0.6666667)
+default_args=(--task "SBTC-Unscrew-Franka-OSC-RNN-v0" --headless --livestream 0  --seed 10 --curriculum_multiplier 1.0)
 
 # Array to hold additional (user-supplied) arguments.
 user_args=()
@@ -157,7 +157,7 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --max_lines_to_search_experiment_logs 1000 \
                       --max_log_extraction_errors 2 \
                       --progress_reporter "None" \
-                      --stopper "None" \
+                      --stopper "UnscrewEarlyStopper" \
                     )
     merge_default_args ray_default_args user_args final_args  #  merge defaults with any overrides in user_args
     SESSION_NAME="ray_training"
