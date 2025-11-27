@@ -12,6 +12,7 @@ docs/
 **/output/*
 **/outputs/*
 **/videos/*
+**/wandb/*
 *.tmp
 # ignore docker
 docker/cluster/exports/
@@ -25,5 +26,7 @@ recordings/
 _isaac_sim?
 # Docker history
 docker/.isaac-lab-docker-history
+# ignore uv environment
+env_isaaclab
 # SBTC: ignore isaaclab eureka symlink
 _isaaclab_eureka
