@@ -1,13 +1,12 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+# Copyright (c) 2022-2026, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+import pinocchio as pin
 import scipy.linalg.blas as blas
 import scipy.linalg.lapack as lapack
-
-import pinocchio as pin
 from pink.configuration import Configuration
 from pink.tasks import Task
 

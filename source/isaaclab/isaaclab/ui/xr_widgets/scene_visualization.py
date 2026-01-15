@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+# Copyright (c) 2022-2026, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -8,13 +8,14 @@ from __future__ import annotations
 import contextlib
 import inspect
 import logging
-import numpy as np
 import threading
 import time
-import torch
 from collections.abc import Callable
 from enum import Enum
 from typing import Any, Union
+
+import numpy as np
+import torch
 
 from pxr import Gf
 
@@ -158,7 +159,7 @@ class VisualizationManager:
     # Type aliases for different callback signatures
     StandardCallback = Callable[["VisualizationManager", "DataCollector"], None]
     EventCallback = Callable[["VisualizationManager", "DataCollector", Any], None]
-    CallbackType = Union[StandardCallback, EventCallback]
+    CallbackType = Union[StandardCallback, EventCallback]  # noqa: UP007
 
     class TimeCountdown:
         """Internal class for managing periodic timer-based callbacks."""

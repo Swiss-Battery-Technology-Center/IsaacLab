@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+# Copyright (c) 2022-2026, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import logging
 import re
-import torch
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+
+import torch
 
 import omni.physics.tensors.impl.api as physx
 from isaacsim.core.simulation_manager import SimulationManager
@@ -591,6 +592,8 @@ class RigidObjectCollection(AssetBase):
     """
 
     def _initialize_impl(self):
+        # clear object names list to prevent double counting on re-initialization
+        self._object_names_list.clear()
         # obtain global simulation view
         self._physics_sim_view = SimulationManager.get_physics_sim_view()
         root_prim_path_exprs = []

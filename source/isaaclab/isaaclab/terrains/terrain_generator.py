@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+# Copyright (c) 2022-2026, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -6,11 +6,12 @@
 from __future__ import annotations
 
 import logging
-import numpy as np
 import os
+from typing import TYPE_CHECKING
+
+import numpy as np
 import torch
 import trimesh
-from typing import TYPE_CHECKING
 
 from isaaclab.utils.dict import dict_to_md5_hash
 from isaaclab.utils.io import dump_yaml

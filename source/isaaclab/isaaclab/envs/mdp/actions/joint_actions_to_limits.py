@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+# Copyright (c) 2022-2026, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -6,9 +6,10 @@
 from __future__ import annotations
 
 import logging
-import torch
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+
+import torch
 
 import isaaclab.utils.math as math_utils
 import isaaclab.utils.string as string_utils
@@ -266,12 +267,12 @@ class EMAJointPositionToLimitsAction(JointPositionToLimitsAction):
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
         # check if specific environment ids are provided
         if env_ids is None:
-            env_ids = slice(None)
+            super().reset(slice(None))
+            self._prev_applied_actions[:] = self._asset.data.joint_pos[:, self._joint_ids]
         else:
-            env_ids = env_ids[:, None]
-        super().reset(env_ids)
-        # reset history to current joint positions
-        self._prev_applied_actions[env_ids, :] = self._asset.data.joint_pos[env_ids, self._joint_ids]
+            super().reset(env_ids)
+            curr_applied_actions = self._asset.data.joint_pos[env_ids[:, None], self._joint_ids].view(len(env_ids), -1)
+            self._prev_applied_actions[env_ids, :] = curr_applied_actions
 
     def process_actions(self, actions: torch.Tensor):
         # apply affine transformations

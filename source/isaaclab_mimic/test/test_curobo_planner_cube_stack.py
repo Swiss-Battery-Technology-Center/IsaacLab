@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+# Copyright (c) 2024-2026, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -23,9 +23,10 @@ headless = True
 app_launcher = AppLauncher(headless=headless)
 simulation_app: Any = app_launcher.app
 
+from collections.abc import Generator
+
 import gymnasium as gym
 import torch
-from collections.abc import Generator
 
 import isaaclab.utils.math as math_utils
 from isaaclab.assets import Articulation, RigidObject

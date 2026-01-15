@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+# Copyright (c) 2022-2026, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import logging
 import math
+from typing import Literal
+
 import numpy as np
 import torch
 import torch.nn.functional
-from typing import Literal
 
 # import logger
 logger = logging.getLogger(__name__)
