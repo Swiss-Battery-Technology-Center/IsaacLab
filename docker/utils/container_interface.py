@@ -220,7 +220,11 @@ class ContainerInterface:
             print(f"[INFO] Stopping the launched docker container '{self.container_name}'...\n")
             # stop running services
             cmd = (
-                ["docker", "compose"] + self.add_yamls + self.add_profiles + self.add_env_files + ["down"] # Ozhan: Dont remove the volumes
+                ["docker", "compose"]
+                + self.add_yamls
+                + self.add_profiles
+                + self.add_env_files
+                + ["down"]  # Ozhan: Dont remove the volumes
             )
             subprocess.run(cmd, check=False, cwd=self.context_dir, env=self.environ)
         else:

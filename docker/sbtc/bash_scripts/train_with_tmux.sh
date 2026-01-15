@@ -150,7 +150,7 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --workflow "${LIBRARY_SCRIPT}" \
                       --num_workers_per_node 1 \
                       --repeat_run_count 1 \
-                      --num_samples 24 \
+                      --num_samples 72 \
                       --metric "${RAY_METRIC}" \
                       --mode "max" \
                       --process_response_timeout 120.0 \
