@@ -964,7 +964,6 @@ class OperationalSpaceControllerAction(ActionTerm):
         """
 
         if p_gains is not None:
-
             # Check the dimension of p gains
             if p_gains.shape != (self.num_envs, 6):
                 raise ValueError(
@@ -982,7 +981,6 @@ class OperationalSpaceControllerAction(ActionTerm):
                 )
 
         if d_gains is not None:
-
             # Check the dimension of d gains
             if d_gains.shape != (self.num_envs, 6):
                 raise ValueError(
@@ -995,7 +993,6 @@ class OperationalSpaceControllerAction(ActionTerm):
 
         # Project the task frame gains to the root frame if needed
         if p_gains is not None or d_gains is not None:
-
             if current_task_frame_pose_b is None:
                 current_task_frame_pose_b = torch.tensor(
                     [[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]] * self.num_envs, device=self._osc._device
@@ -1073,9 +1070,9 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
         if self._pose_abs_idx is not None:
             # Scaling
             self._unfiltered_scaled_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3] *= self._position_scale
-            self._unfiltered_scaled_actions[
-                :, self._pose_abs_idx + 3 : self._pose_abs_idx + 7
-            ] *= self._orientation_scale
+            self._unfiltered_scaled_actions[:, self._pose_abs_idx + 3 : self._pose_abs_idx + 7] *= (
+                self._orientation_scale
+            )
             # Filtering
             self._unclipped_filtered_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3] = (
                 self._pos_lpf_alpha * self._unfiltered_scaled_actions[:, self._pose_abs_idx : self._pose_abs_idx + 3]
@@ -1111,9 +1108,9 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
         if self._pose_rel_idx is not None:
             # Scaling
             self._unfiltered_scaled_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3] *= self._position_scale
-            self._unfiltered_scaled_actions[
-                :, self._pose_rel_idx + 3 : self._pose_rel_idx + 6
-            ] *= self._orientation_scale
+            self._unfiltered_scaled_actions[:, self._pose_rel_idx + 3 : self._pose_rel_idx + 6] *= (
+                self._orientation_scale
+            )
             # Filtering
             self._unclipped_filtered_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3] = (
                 self._pos_lpf_alpha * self._unfiltered_scaled_actions[:, self._pose_rel_idx : self._pose_rel_idx + 3]
@@ -1151,9 +1148,9 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
                 max=self.cfg.controller_cfg.motion_stiffness_limits_task[1],
             )
         if self._damping_ratio_idx is not None:
-            self._processed_actions[
-                :, self._damping_ratio_idx : self._damping_ratio_idx + 6
-            ] *= self._damping_ratio_scale
+            self._processed_actions[:, self._damping_ratio_idx : self._damping_ratio_idx + 6] *= (
+                self._damping_ratio_scale
+            )
             self._processed_actions[:, self._damping_ratio_idx : self._damping_ratio_idx + 6] = torch.clamp(
                 self._processed_actions[:, self._damping_ratio_idx : self._damping_ratio_idx + 6],
                 min=self.cfg.controller_cfg.motion_damping_ratio_limits_task[0],
