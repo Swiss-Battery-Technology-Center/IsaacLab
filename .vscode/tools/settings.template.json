@@ -81,5 +81,22 @@
     },
     // Python extra paths
     // Note: this is filled up when "./isaaclab.sh -i" is run
-    "python.analysis.extraPaths": []
+    "python.analysis.extraPaths": [],
+
+    "workbench.colorCustomizations": { 
+        "activityBar.activeBackground": "#FFD400", 
+        "activityBar.background": "#FFD400", 
+        "activityBar.foreground": "#000000", 
+        "activityBar.inactiveForeground": "#00000099", 
+        "statusBar.background": "#E6C200", 
+        "statusBar.foreground": "#000000", 
+        "statusBarItem.hoverBackground": "#FFD400", 
+        "titleBar.activeBackground": "#E6C200", 
+        "titleBar.activeForeground": "#000000",
+        "titleBar.inactiveBackground": "#E6C20099", 
+        "titleBar.inactiveForeground": "#00000099", 
+        "activityBarBadge.background": "#333333", 
+        "activityBarBadge.foreground": "#FFFFFF", 
+        "sash.hoverBorder": "#FFD400" 
+    }
 }
