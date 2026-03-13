@@ -144,7 +144,7 @@ elif [ "$WORKFLOW" = "eureka" ]; then
 elif [ "$WORKFLOW" = "ray" ]; then
     TRAINING_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/tuner.py"
     # Define default arguments for ray tuner.
-    ray_default_args=(--cfg_file "${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/sbtc_ray/unscrew_franka_cfg.py" \
+    ray_default_args=(--cfg_file "${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/sbtc_ray/sbtc_tasks_ray_cfg.py" \
                       --cfg_class "UnscrewSeedRandCfg" \
                       --run_mode "local" \
                       --workflow "${LIBRARY_SCRIPT}" \
