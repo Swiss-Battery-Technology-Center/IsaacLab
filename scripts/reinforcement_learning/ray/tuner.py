@@ -106,6 +106,7 @@ class IsaacLabTuneTrainable(tune.Trainable):
                     persistent_dir=BASE_DIR,
                     max_lines_to_search_logs=MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS,
                     max_time_to_search_logs=PROCESS_RESPONSE_TIMEOUT,
+                    log_all_output=False # enable for debugging, but logs will be very large
                 )
             except util.LogExtractionError:
                 self.data = {
@@ -474,7 +475,12 @@ if __name__ == "__main__":
         default=None,
         help="A stop criteria in the cfg_file, must be a tune.Stopper instance.",
     )
-
+    parser.add_argument(
+        "--experiment_name",
+        type=str,
+        default=None,
+        help="Optional experiment name to use for logging. Overrides default naming convention.",
+    )
     args = parser.parse_args()
     PROCESS_RESPONSE_TIMEOUT = args.process_response_timeout
     MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS = int(args.max_lines_to_search_experiment_logs)
@@ -532,6 +538,9 @@ if __name__ == "__main__":
         print(f"[INFO]: Successfully instantiated class '{class_name}' from {file_path}")
         cfg = instance.cfg
         print(f"[INFO]: Grabbed the following hyperparameter sweep config: \n {cfg}")
+        if args.experiment_name is not None and args.experiment_name != "None":
+            print(f"[INFO]: Overriding default experiment name with provided experiment name {args.experiment_name}")
+            cfg["runner_args"]["--experiment_name"] = args.experiment_name
         # Load optional stopper config
         stopper = None
         if args.stopper and hasattr(module, args.stopper):
