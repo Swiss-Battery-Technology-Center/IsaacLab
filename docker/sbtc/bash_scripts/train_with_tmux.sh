@@ -145,19 +145,20 @@ elif [ "$WORKFLOW" = "ray" ]; then
     TRAINING_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/tuner.py"
     # Define default arguments for ray tuner.
     ray_default_args=(--cfg_file "${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/sbtc_ray/sbtc_tasks_ray_cfg.py" \
-                      --cfg_class "UnscrewSeedRandCfg" \
-                      --run_mode "local" \
-                      --workflow "${LIBRARY_SCRIPT}" \
-                      --num_workers_per_node 1 \
-                      --repeat_run_count 1 \
-                      --num_samples 72 \
-                      --metric "${RAY_METRIC}" \
-                      --mode "max" \
-                      --process_response_timeout 120.0 \
-                      --max_lines_to_search_experiment_logs 1000 \
-                      --max_log_extraction_errors 2 \
-                      --progress_reporter "None" \
-                      --stopper "UnscrewEarlyStopper" \
+                    --cfg_class "UnscrewSeedRandCfg" \
+                    --run_mode "local" \
+                    --workflow "${LIBRARY_SCRIPT}" \
+                    --num_workers_per_node 1 \
+                    --repeat_run_count 1 \
+                    --num_samples 72 \
+                    --metric "${RAY_METRIC}" \
+                    --mode "max" \
+                    --process_response_timeout 120.0 \
+                    --max_lines_to_search_experiment_logs 1000 \
+                    --max_log_extraction_errors 2 \
+                    --progress_reporter "None" \
+                    --stopper "UnscrewEarlyStopper" \
+                    --experiment_name "None" \
                     )
     merge_default_args ray_default_args user_args final_args  #  merge defaults with any overrides in user_args
     SESSION_NAME="ray_training"
