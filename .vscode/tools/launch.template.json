@@ -68,7 +68,8 @@
             "name": "Python: Train sbtc-reach-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
+            "args" : ["--task", "SBTC-Reach-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096", "--max_iterations", "1000",
+        "--video", "--video_length", "500", "--video_interval", "2400"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
@@ -84,7 +85,8 @@
             "name": "Python: Train sbtc-lift-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096"],
+            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096","--max_iterations", "1500",
+        "--video", "--video_length", "500", "--video_interval", "2400"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
