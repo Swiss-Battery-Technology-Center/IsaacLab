@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import MISSING
-from typing import Literal
 from isaaclab.managers import CommandTermCfg
 from isaaclab.markers import VisualizationMarkersCfg
 from isaaclab.markers.config import BLUE_ARROW_X_MARKER_CFG, FRAME_MARKER_CFG, GREEN_ARROW_X_MARKER_CFG
@@ -14,7 +13,7 @@ from isaaclab.utils import configclass
 
 from .null_command import NullCommand
 from .pose_2d_command import TerrainBasedPose2dCommand, UniformPose2dCommand
-from .pose_command import UniformPoseCommand, UniformPoseEncodedCommand
+from .pose_command import UniformPoseCommand, UniformPoseEncodedCommand, OrientationMode
 from .velocity_command import NormalVelocityCommand, UniformVelocityCommand
 
 
@@ -253,7 +252,6 @@ class TerrainBasedPose2dCommandCfg(UniformPose2dCommandCfg):
     """Distribution ranges for the sampled commands."""
 
 
-
 @configclass
 class UniformPoseEncodedCommandCfg(UniformPoseCommandCfg):
     """Uniform pose command with configurable exposed orientation representation.
@@ -267,7 +265,7 @@ class UniformPoseEncodedCommandCfg(UniformPoseCommandCfg):
 
     class_type: type = UniformPoseEncodedCommand# set after class definition
 
-    orientation_representation: Literal["quat", "axis_angle", "rot6d"] = "quat"
+    orientation_representation : OrientationMode = OrientationMode.QUAT
 
     # only used when orientation_representation == "axis_angle"
     # quaternion in (w, x, y, z)

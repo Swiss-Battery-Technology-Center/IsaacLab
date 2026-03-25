@@ -16,5 +16,5 @@ from .commands_cfg import (
 )
 from .null_command import NullCommand
 from .pose_2d_command import TerrainBasedPose2dCommand, UniformPose2dCommand
-from .pose_command import UniformPoseCommand, UniformPoseEncodedCommand
+from .pose_command import UniformPoseCommand, UniformPoseEncodedCommand, OrientationMode
 from .velocity_command import NormalVelocityCommand, UniformVelocityCommand

@@ -26,7 +26,7 @@ from isaaclab.utils.math import (
     quat_unique,
     rot6d_from_quat,
 )
-
+from enum import StrEnum
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedEnv
@@ -166,6 +166,10 @@ class UniformPoseCommand(CommandTerm):
         body_link_pose_w = self.robot.data.body_link_pose_w[:, self.body_idx]
         self.current_pose_visualizer.visualize(body_link_pose_w[:, :3], body_link_pose_w[:, 3:7])
 
+class OrientationMode(StrEnum):
+    QUAT = "quat"
+    AXIS_ANGLE = "axis_angle"
+    ROT6D = "rot6d"
 
 class UniformPoseEncodedCommand(UniformPoseCommand):
     """Uniform pose command with configurable exposed orientation representation.
@@ -182,7 +186,7 @@ class UniformPoseEncodedCommand(UniformPoseCommand):
     def __init__(self, cfg: UniformPoseEncodedCommandCfg, env):
         super().__init__(cfg, env)
 
-        if self.cfg.orientation_representation == "quat":
+        if self.cfg.orientation_representation == OrientationMode.QUAT:
             # Reuse parent buffers exactly for full backward compatibility.
             self.pose_command_b_quat = self.pose_command_b
             self.pose_command_w_quat = self.pose_command_w
@@ -195,9 +199,9 @@ class UniformPoseEncodedCommand(UniformPoseCommand):
             self.pose_command_w_quat[:, 3] = 1.0
 
             # Replace public exposed command buffer with representation-dependent layout
-            if self.cfg.orientation_representation == "axis_angle":
+            if self.cfg.orientation_representation == OrientationMode.AXIS_ANGLE:
                 cmd_dim = 6
-            elif self.cfg.orientation_representation == "rot6d":
+            elif self.cfg.orientation_representation == OrientationMode.ROT6D:
                 cmd_dim = 9
             else:
                 raise ValueError(
@@ -212,7 +216,7 @@ class UniformPoseEncodedCommand(UniformPoseCommand):
         msg += f"\tCommand dimension: {tuple(self.command.shape[1:])}\n"
         msg += f"\tOrientation representation: {self.cfg.orientation_representation}\n"
         msg += f"\tResampling time range: {self.cfg.resampling_time_range}\n"
-        if self.cfg.orientation_representation == "axis_angle":
+        if self.cfg.orientation_representation == OrientationMode.AXIS_ANGLE:
             msg += f"\tAxis-angle reference quat: {self.cfg.axis_angle_reference_quat}\n"
         return msg
 
@@ -247,14 +251,14 @@ class UniformPoseEncodedCommand(UniformPoseCommand):
 
             self.pose_command_b[:, :3] = pos
 
-            if self.cfg.orientation_representation == "quat":
+            if self.cfg.orientation_representation == OrientationMode.QUAT:
                 self.pose_command_b[:, 3:7] = quat
 
-            elif self.cfg.orientation_representation == "axis_angle":
+            elif self.cfg.orientation_representation == OrientationMode.AXIS_ANGLE:
                 ref_quat = self._axis_angle_reference_quat_tensor(quat.shape[0], quat.device).to(quat.dtype)
                 self.pose_command_b[:, 3:6] = axis_angle_relative_from_quat(quat, ref_quat)
 
-            elif self.cfg.orientation_representation == "rot6d":
+            elif self.cfg.orientation_representation == OrientationMode.ROT6D:
                 self.pose_command_b[:, 3:9] = rot6d_from_quat(quat)
 
             else:
@@ -268,14 +272,14 @@ class UniformPoseEncodedCommand(UniformPoseCommand):
 
             self.pose_command_b[env_ids, :3] = pos
 
-            if self.cfg.orientation_representation == "quat":
+            if self.cfg.orientation_representation == OrientationMode.QUAT:
                 self.pose_command_b[env_ids, 3:7] = quat
 
-            elif self.cfg.orientation_representation == "axis_angle":
+            elif self.cfg.orientation_representation == OrientationMode.AXIS_ANGLE:
                 ref_quat = self._axis_angle_reference_quat_tensor(quat.shape[0], quat.device).to(quat.dtype)
                 self.pose_command_b[env_ids, 3:6] = axis_angle_relative_from_quat(quat, ref_quat)
 
-            elif self.cfg.orientation_representation == "rot6d":
+            elif self.cfg.orientation_representation == OrientationMode.ROT6D:
                 self.pose_command_b[env_ids, 3:9] = rot6d_from_quat(quat)
 
             else:
@@ -325,12 +329,12 @@ class UniformPoseEncodedCommand(UniformPoseCommand):
 
         # update public representation buffer
         self._update_command_representation(env_ids)
-        if self.cfg.orientation_representation == "quat":
+        if self.cfg.orientation_representation == OrientationMode.QUAT:
             max_diff = (self.pose_command_b[env_ids] - self.pose_command_b_quat[env_ids]).abs().max()
             if max_diff > 1e-6:
                 raise RuntimeError(f"quat command mismatch after resample: {max_diff.item()}")
 
-        elif self.cfg.orientation_representation == "rot6d":
+        elif self.cfg.orientation_representation == OrientationMode.ROT6D:
             q_ref = normalize(self.pose_command_b_quat[env_ids, 3:7])
             d6 = self.pose_command_b[env_ids, 3:9]
             q_dec = normalize(quat_from_rot6d(d6))
