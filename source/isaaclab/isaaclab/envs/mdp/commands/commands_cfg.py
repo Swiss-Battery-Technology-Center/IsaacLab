@@ -13,7 +13,7 @@ from isaaclab.utils import configclass
 
 from .null_command import NullCommand
 from .pose_2d_command import TerrainBasedPose2dCommand, UniformPose2dCommand
-from .pose_command import UniformPoseCommand, UniformPoseEncodedCommand, OrientationMode
+from .pose_command import UniformPoseCommand
 from .velocity_command import NormalVelocityCommand, UniformVelocityCommand
 
 
@@ -251,22 +251,3 @@ class TerrainBasedPose2dCommandCfg(UniformPose2dCommandCfg):
     ranges: Ranges = MISSING
     """Distribution ranges for the sampled commands."""
 
-
-@configclass
-class UniformPoseEncodedCommandCfg(UniformPoseCommandCfg):
-    """Uniform pose command with configurable exposed orientation representation.
-
-    Internal canonical orientation is always quaternion.
-    Exposed command orientation can be:
-      - "quat"       -> pos(3) + quat(4)   = 7
-      - "axis_angle" -> pos(3) + aa(3)     = 6
-      - "rot6d"      -> pos(3) + rot6d(6)  = 9
-    """
-
-    class_type: type = UniformPoseEncodedCommand# set after class definition
-
-    orientation_representation : OrientationMode = OrientationMode.QUAT
-
-    # only used when orientation_representation == "axis_angle"
-    # quaternion in (w, x, y, z)
-    axis_angle_reference_quat: tuple[float, float, float, float] = (1.0, 0.0, 0.0, 0.0)
