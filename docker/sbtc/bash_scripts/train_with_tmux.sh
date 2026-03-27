@@ -66,7 +66,7 @@ WORKFLOW="isaaclab"
 LIBRARY="rsl_rl"
 
 # Default arguments for the isaaclab workflow (for rsl_rl and skrl)
-default_args=(--task "SBTC-Unscrew-Franka-OSC-RNN-v0" --headless --livestream 0  --seed 10 --curriculum_multiplier 1.0)
+default_args=(--task "SBTC-Unscrew-Franka-OSC-RNN-Train-v0" --headless --livestream 0  --seed 10 --curriculum_multiplier 1.0)
 
 # Array to hold additional (user-supplied) arguments.
 user_args=()
