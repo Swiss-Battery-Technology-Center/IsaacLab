@@ -61,6 +61,9 @@ echo "TMUX_SCRIPT_DIRECTORY is set to: ${TMUX_SCRIPT_DIRECTORY}"
 #   "eureka"    - use the eureka training script
 #   "ray"       - use the ray tuner and run a separate ray_server session
 WORKFLOW="isaaclab"
+CUSTOM_WORKFLOW_SCRIPT=""
+USE_HOLD_EPS=false
+HOLD_EPS_WORKFLOW_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/source/isaaclab_tasks/isaaclab_tasks/sbtc_tasks/utils/rsl_rl_train_hold_eps.py"
 
 # The library (only rsl_rl and skrl are allowed; default is rsl_rl)
 LIBRARY="rsl_rl"
@@ -96,6 +99,15 @@ while [[ $# -gt 0 ]]; do
             WORKFLOW="$1"
             shift
             ;;
+        --workflow_script)
+            shift
+            CUSTOM_WORKFLOW_SCRIPT="$1"
+            shift
+            ;;
+        --hold_eps)
+            USE_HOLD_EPS=true
+            shift
+            ;;
         --eureka)
             WORKFLOW="eureka"
             shift
@@ -129,11 +141,20 @@ else
     LIBRARY="rsl_rl"
 fi
 
+# If requested, switch RSL-RL workflow to the SBTC hold-eps entrypoint by default.
+# Explicit --workflow_script still has priority.
+if [ "$USE_HOLD_EPS" = true ] && [ "$LIBRARY" = "rsl_rl" ] && [ -z "$CUSTOM_WORKFLOW_SCRIPT" ]; then
+    CUSTOM_WORKFLOW_SCRIPT="${HOLD_EPS_WORKFLOW_SCRIPT}"
+fi
+
 ###############################################
 # Workflow sanity check and TRAINING_SCRIPT assignment.
 ###############################################
 if [ "$WORKFLOW" = "isaaclab" ]; then
     TRAINING_SCRIPT="${LIBRARY_SCRIPT}"
+    if [ -n "$CUSTOM_WORKFLOW_SCRIPT" ]; then
+        TRAINING_SCRIPT="${CUSTOM_WORKFLOW_SCRIPT}"
+    fi
     final_args=("${default_args[@]}" "${user_args[@]}")
     SESSION_NAME="isaaclab_training"
 elif [ "$WORKFLOW" = "eureka" ]; then
@@ -143,11 +164,20 @@ elif [ "$WORKFLOW" = "eureka" ]; then
     SESSION_NAME="eureka_training"
 elif [ "$WORKFLOW" = "ray" ]; then
     TRAINING_SCRIPT="${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/tuner.py"
+    RAY_WORKFLOW_SCRIPT="${LIBRARY_SCRIPT}"
+    if [ -n "$CUSTOM_WORKFLOW_SCRIPT" ]; then
+        RAY_WORKFLOW_SCRIPT="${CUSTOM_WORKFLOW_SCRIPT}"
+    fi
+    RAY_CFG_CLASS="UnscrewSeedRandCfg"
+    if [ "$USE_HOLD_EPS" = true ] && [ "$LIBRARY" = "rsl_rl" ]; then
+        # Under-the-hood automatic selection for ablation + hold-eps Ray runs.
+        RAY_CFG_CLASS="UnscrewAblationHoldEpsSeedRandCfg"
+    fi
     # Define default arguments for ray tuner.
     ray_default_args=(--cfg_file "${TMUX_SCRIPT_DIRECTORY}/scripts/reinforcement_learning/ray/sbtc_ray/sbtc_tasks_ray_cfg.py" \
-                    --cfg_class "UnscrewSeedRandCfg" \
+                    --cfg_class "${RAY_CFG_CLASS}" \
                     --run_mode "local" \
-                    --workflow "${LIBRARY_SCRIPT}" \
+                    --workflow "${RAY_WORKFLOW_SCRIPT}" \
                     --num_workers_per_node 1 \
                     --repeat_run_count 1 \
                     --num_samples 72 \
@@ -175,6 +205,7 @@ fi
 ###############################################
 echo "Selected library: ${LIBRARY}"
 echo "Using workflow: ${WORKFLOW}"
+echo "Using hold_eps mode: ${USE_HOLD_EPS}"
 echo "Using training script: ${TRAINING_SCRIPT}"
 echo "With arguments: ${final_args[@]}"
 sleep 3  # Optional: allow the user to see the output before proceeding.

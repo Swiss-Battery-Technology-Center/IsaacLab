@@ -16,18 +16,71 @@
             "name": "Python: Train-rsl_rl sbtc-unscrew-franka-OSC-RNN",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-RNN-Train-v0", "--headless", "--livestream", "0", "--num_envs", "1024",
-                      "--video", "--video_length", "500", "--video_interval", "2400"],
+            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-RNN-Train-v0", "--headless", "--livestream", "0", "--num_envs", "1024", "--max_iterations", "1000",
+                      "--video", "--video_length", "500", "--video_interval", "4800",
+                      "--experiment_name", "sbtc_franka_unscrew_osc_rnn",
+                    "--run_name", "seed_42"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Ablation Train-rsl_rl sbtc-unscrew-franka-OSC-RNN",
+            "name": "Python: Ablation Train-rsl_rl sbtc-unscrew-franka-OSC-RNN (Baseline)",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-RNN-Ablation-v0", "--headless", "--livestream", "0", "--num_envs", "1024", "--max_iterations", "1500",
-                      "--video", "--video_length", "500", "--video_interval", "2400"],
+            "args" : ["--task", "SBTC-Unscrew-Ablation-Franka-OSC-RNN-Train-v0", "--headless", "--livestream", "0", "--num_envs", "1024", "--max_iterations", "1000",
+                      "--video", "--video_length", "500", "--video_interval", "2400",
+                    "--experiment_name", "ablation_sbtc_franka_unscrew_osc_rnn"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Ablation Train-rsl_rl HETERO sbtc-unscrew-franka-OSC-RNN",
+            "type": "debugpy",
+            "request": "launch",
+            "args" : [
+                "--task", "SBTC-Unscrew-Ablation-Franka-OSC-RNN-Train-v0",
+                "--agent", "rsl_rl_rnn_hetero_cfg_entry_point",
+                "--headless", "--livestream", "0",
+                "--num_envs", "1024",
+                "--max_iterations", "1000",
+                "--video", "--video_length", "500", "--video_interval", "2400",
+                "--experiment_name", "ablation_sbtc_franka_unscrew_osc_rnn_hetero"
+            ],
+            "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Ablation Train-rsl_rl HOLD_EPS sbtc-unscrew-franka-OSC-RNN",
+            "type": "debugpy",
+            "request": "launch",
+            "args" : [
+                "--task", "SBTC-Unscrew-Ablation-Franka-OSC-RNN-Train-v0",
+                "--agent", "rsl_rl_hold_eps_cfg_entry_point",
+                "--headless", "--livestream", "0",
+                "--num_envs", "1024",
+                "--max_iterations", "1000",
+                "--noise_resample_interval", "4",
+                "--video", "--video_length", "500", "--video_interval", "2400",
+                "--experiment_name", "ablation_sbtc_franka_unscrew_osc_rnn_hold_eps"
+            ],
+            "program": "${workspaceFolder}/source/isaaclab_tasks/isaaclab_tasks/sbtc_tasks/utils/rsl_rl_train_hold_eps.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Ablation Train-rsl_rl HETERO + HOLD_EPS sbtc-unscrew-franka-OSC-RNN",
+            "type": "debugpy",
+            "request": "launch",
+            "args" : [
+                "--task", "SBTC-Unscrew-Ablation-Franka-OSC-RNN-Train-v0",
+                "--agent", "rsl_rl_rnn_hetero_hold_eps_cfg_entry_point",
+                "--headless", "--livestream", "0",
+                "--num_envs", "1024",
+                "--max_iterations", "1000",
+                "--noise_resample_interval", "4",
+                "--video", "--video_length", "500", "--video_interval", "2400",
+                "--experiment_name", "ablation_sbtc_franka_unscrew_osc_rnn_hetero_hold_eps"
+            ],
+            "program": "${workspaceFolder}/source/isaaclab_tasks/isaaclab_tasks/sbtc_tasks/utils/rsl_rl_train_hold_eps.py",
             "console": "integratedTerminal"
         },
         {
@@ -69,7 +122,8 @@
             "type": "debugpy",
             "request": "launch",
             "args" : ["--task", "SBTC-Reach-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096", "--max_iterations", "1000",
-        "--video", "--video_length", "500", "--video_interval", "2400"],
+        "--video", "--video_length", "500", "--video_interval", "2400",
+        "--experiment_name", "sbtc_franka_reach_osc"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
@@ -86,7 +140,8 @@
             "type": "debugpy",
             "request": "launch",
             "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096","--max_iterations", "1500",
-        "--video", "--video_length", "500", "--video_interval", "2400"],
+        "--video", "--video_length", "500", "--video_interval", "2400", 
+        "--experiment_name", "sbtc_franka_lift_osc"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
