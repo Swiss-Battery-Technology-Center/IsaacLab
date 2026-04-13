@@ -158,6 +158,7 @@ elif [ "$WORKFLOW" = "ray" ]; then
                       --max_log_extraction_errors 2 \
                       --progress_reporter "None" \
                       --stopper "UnscrewEarlyStopper" \
+                    --experiment_name "None" \
                     )
     merge_default_args ray_default_args user_args final_args  #  merge defaults with any overrides in user_args
     SESSION_NAME="ray_training"
