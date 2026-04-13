@@ -1166,7 +1166,7 @@ class OperationalSpaceControllerActionFiltered(OperationalSpaceControllerAction)
         """
 
         self.cfg.position_lpf_cutoff = pos_lpf_cutoff_f
-        self.cfg.orientation_lpf_cutoff = pos_lpf_cutoff_f
+        self.cfg.orientation_lpf_cutoff = ori_lpf_cutoff_f
 
         self._pos_lpf_bandwidth_rad.fill_(pos_lpf_cutoff_f * 2 * torch.pi)
         self._ori_lpf_bandwidth_rad.fill_(ori_lpf_cutoff_f * 2 * torch.pi)
