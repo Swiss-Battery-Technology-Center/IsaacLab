@@ -106,7 +106,7 @@ class IsaacLabTuneTrainable(tune.Trainable):
                     persistent_dir=BASE_DIR,
                     max_lines_to_search_logs=MAX_LINES_TO_SEARCH_EXPERIMENT_LOGS,
                     max_time_to_search_logs=PROCESS_RESPONSE_TIMEOUT,
-                    log_all_output=False # enable for debugging, but logs will be very large
+                    log_all_output=False,  # enable for debugging, but logs will be very large
                 )
             except util.LogExtractionError:
                 self.data = {

@@ -79,7 +79,7 @@
             "type": "debugpy",
             "request": "launch",
             "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096","--max_iterations", "1500",
-        "--video", "--video_length", "500", "--video_interval", "2400", 
+        "--video", "--video_length", "500", "--video_interval", "2400",
         "--experiment_name", "sbtc_franka_lift_osc"],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"

@@ -161,7 +161,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # so that ray can see logdir including agent_cfg.run_name!!
     print(f"Exact experiment name requested from command line: {log_dir}")
-    
+
     log_dir = os.path.join(log_root_path, log_dir)
 
     # set the IO descriptors export flag if requested
