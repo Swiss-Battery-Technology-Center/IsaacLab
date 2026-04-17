@@ -10,14 +10,28 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args" : [ "--headless", "--livestream", "2"]
+            "args": [
+                "--headless",
+                "--livestream",
+                "2"
+            ]
         },
         {
             "name": "Python: Train-rsl_rl sbtc-unscrew-franka-OSC-RNN",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-RNN-Train-v0", "--headless", "--livestream", "0", "--num_envs", "1024", "--max_iterations", "1000",
-                      "--video", "--video_length", "500", "--video_interval", "4800"],
+            "args": [
+                "--task",
+                "SBTC-Unscrew-Franka-OSC-RNN-Train-v0",
+                "--headless",
+                "--livestream",
+                "0",
+                "--video",
+                "--video_length",
+                "500",
+                "--video_interval",
+                "3600"
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
@@ -25,7 +39,13 @@
             "name": "Python: Play-rsl_rl sbtc-unscrew-franka-OSC-RNN",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-RNN-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args": [
+                "--task",
+                "SBTC-Unscrew-Franka-OSC-RNN-Play-v0",
+                "--headless",
+                "--livestream",
+                "2"
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
@@ -42,7 +62,7 @@
             "request": "launch",
             "module": "pytest",
             "args": [
-              "${file}"
+                "${file}"
             ],
             "console": "integratedTerminal"
         },
@@ -51,7 +71,9 @@
             "type": "python",
             "request": "launch",
             "module": "pytest",
-            "args": ["source/isaaclab/test"],
+            "args": [
+                "source/isaaclab/test"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -59,8 +81,18 @@
             "name": "Python: Train sbtc-reach-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096", "--max_iterations", "1000",
-        "--video", "--video_length", "500", "--video_interval", "2400"],
+            "args": [
+                "--task",
+                "SBTC-Reach-Franka-OSC-Train-v0",
+                "--headless",
+                "--livestream",
+                "0",
+                "--video",
+                "--video_length",
+                "500",
+                "--video_interval",
+                "3600"
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
@@ -68,7 +100,13 @@
             "name": "Python: Play sbtc-reach-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args": [
+                "--task",
+                "SBTC-Reach-Franka-OSC-Play-v0",
+                "--headless",
+                "--livestream",
+                "2",
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
@@ -76,8 +114,18 @@
             "name": "Python: Train sbtc-lift-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Train-v0", "--headless", "--livestream", "0", "--num_envs", "4096","--max_iterations", "1500",
-        "--video", "--video_length", "500", "--video_interval", "2400"],
+            "args": [
+                "--task",
+                "SBTC-Lift-Cube-Franka-OSC-Train-v0",
+                "--headless",
+                "--livestream",
+                "0",
+                "--video",
+                "--video_length",
+                "500",
+                "--video_interval",
+                "3600"
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/train.py",
             "console": "integratedTerminal"
         },
@@ -85,7 +133,13 @@
             "name": "Python: Play sbtc-lift-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Play-v0", "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args": [
+                "--task",
+                "SBTC-Lift-Cube-Franka-OSC-Play-v0",
+                "--headless",
+                "--livestream",
+                "2",
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
@@ -93,7 +147,13 @@
             "name": "Python: RandomAgent sbtc-unscrew-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args": [
+                "--task",
+                "SBTC-Unscrew-Franka-OSC-Play-v0",
+                "--headless",
+                "--livestream",
+                "2",
+            ],
             "program": "${workspaceFolder}/scripts/environments/random_agent.py",
             "console": "integratedTerminal"
         },
@@ -101,7 +161,13 @@
             "name": "Python: RandomAgent sbtc-reach-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-OSC-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args": [
+                "--task",
+                "SBTC-Reach-Franka-OSC-Play-v0",
+                "--headless",
+                "--livestream",
+                "2",
+            ],
             "program": "${workspaceFolder}/scripts/environments/random_agent.py",
             "console": "integratedTerminal"
         },
@@ -109,7 +175,13 @@
             "name": "Python: RandomAgent sbtc-lift-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Play-v0",  "--headless", "--livestream", "2", "--num_envs", "4"],
+            "args": [
+                "--task",
+                "SBTC-Lift-Cube-Franka-OSC-Play-v0",
+                "--headless",
+                "--livestream",
+                "2"
+            ],
             "program": "${workspaceFolder}/scripts/environments/random_agent.py",
             "console": "integratedTerminal"
         },
@@ -117,8 +189,18 @@
             "name": "Python: Record sbtc-unscrew-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Unscrew-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
-            "--video", "--video_length", "500"],
+            "args": [
+                "--task",
+                "SBTC-Unscrew-Franka-OSC-Record-v0",
+                "--headless",
+                "--livestream",
+                "2",
+                "--num_envs",
+                "1",
+                "--video",
+                "--video_length",
+                "500"
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
@@ -126,8 +208,18 @@
             "name": "Python: Record sbtc-reach-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Reach-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
-            "--video", "--video_length", "500"],
+            "args": [
+                "--task",
+                "SBTC-Reach-Franka-OSC-Record-v0",
+                "--headless",
+                "--livestream",
+                "2",
+                "--num_envs",
+                "1",
+                "--video",
+                "--video_length",
+                "500"
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         },
@@ -135,8 +227,18 @@
             "name": "Python: Record sbtc-lift-franka-OSC",
             "type": "debugpy",
             "request": "launch",
-            "args" : ["--task", "SBTC-Lift-Cube-Franka-OSC-Record-v0", "--headless", "--livestream", "2", "--num_envs", "1",
-            "--video", "--video_length", "500"],
+            "args": [
+                "--task",
+                "SBTC-Lift-Cube-Franka-OSC-Record-v0",
+                "--headless",
+                "--livestream",
+                "2",
+                "--num_envs",
+                "1",
+                "--video",
+                "--video_length",
+                "500"
+            ],
             "program": "${workspaceFolder}/scripts/reinforcement_learning/rsl_rl/play.py",
             "console": "integratedTerminal"
         }
